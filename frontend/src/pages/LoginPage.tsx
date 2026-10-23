@@ -9,6 +9,7 @@ function initialMessage(): string {
   // Spring Security가 로그인 실패나 로그아웃 뒤에 붙이는 query parameter를 화면 안내로 바꿉니다.
   if (parameters.has('error')) return '로그인하지 못했어요. 잠시 후 다시 시도해 주세요.';
   if (parameters.has('logout')) return '로그아웃했어요.';
+  if (parameters.get('login') === 'success') return '로그인이 완료됐어요.';
 
   return '';
 }

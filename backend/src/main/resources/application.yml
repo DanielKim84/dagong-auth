@@ -1,5 +1,5 @@
 server:
-  port: ${SERVER_PORT:4840}
+  port: ${SERVER_PORT:5840}
 spring:
   config:
     # 루트 또는 backend 폴더에서 bootRun을 실행해도 루트의 .env를 찾습니다.
@@ -20,12 +20,37 @@ spring:
   flyway:
     # Hibernate가 엔티티 매핑을 검사하기 전에 스키마를 적용합니다.
     enabled: true
+  security:
+    oauth2:
+      client:
+        registration:
+          kakao:
+            # REST API 키와 Client Secret은 루트 .env에만 둡니다.
+            client-id: ${KAKAO_CLIENT_ID:unconfigured}
+            client-secret: ${KAKAO_CLIENT_SECRET:unconfigured}
+            client-authentication-method: client_secret_post
+            authorization-grant-type: authorization_code
+            redirect-uri: ${KAKAO_REDIRECT_URI:http://localhost:4840/login/oauth2/code/kakao}
+            scope:
+              - profile_nickname
+            client-name: Kakao
+        provider:
+          kakao:
+            authorization-uri: https://kauth.kakao.com/oauth/authorize
+            token-uri: https://kauth.kakao.com/oauth/token
+            user-info-uri: https://kapi.kakao.com/v2/user/me
+            user-info-authentication-method: header
+            user-name-attribute: id
 logging:
   level:
     org.springframework.security: INFO
 dagong:
   auth:
-    issuer: ${AUTH_ISSUER:http://localhost:4840}
+    issuer: ${AUTH_ISSUER:http://localhost:5840}
+    # 개발 화면은 Vite(4840)가 제공하고, API와 OAuth 엔드포인트만 이 서버(5840)가 처리합니다.
+    login-page-url: ${AUTH_LOGIN_PAGE_URL:/login}
+    login-success-url: ${AUTH_LOGIN_SUCCESS_URL:/login}
+    login-failure-url: ${AUTH_LOGIN_FAILURE_URL:/login?error}
     keystore-path: ${AUTH_KEYSTORE_PATH:${user.home}/.dagong-auth/auth-signing.p12}
     keystore-password: ${AUTH_KEYSTORE_PASSWORD}
     keystore-alias: ${AUTH_KEYSTORE_ALIAS:dagong-auth-signing}

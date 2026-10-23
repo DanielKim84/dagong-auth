@@ -19,8 +19,15 @@ interface SocialLoginButtonProps {
 export default function SocialLoginButton({ provider, onUnavailable }: SocialLoginButtonProps) {
   const providerName = providerNames[provider];
 
-  // OAuth 연동 전에는 이동시키지 않고 연결 대기 안내를 표시합니다.
+  // 화면 개발 서버(4840)와 인증 API 서버(5840)를 분리해 Kakao 인증은 백엔드에서 시작합니다.
   function handleClick() {
+    if (provider === 'kakao') {
+      // 개발 중에는 Vite가 5840으로 전달하고, 배포에서는 같은 서버가 이 경로를 처리합니다.
+      window.location.assign('/oauth2/authorization/kakao');
+      return;
+    }
+
+    // 아직 연동하지 않은 다른 제공자는 기존 안내를 유지합니다.
     onUnavailable(`${providerName} 로그인은 아직 연결 전이에요. 연결이 완료되면 여기서 시작할 수 있어요.`);
   }
 

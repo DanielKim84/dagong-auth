@@ -6,13 +6,13 @@ export default defineConfig(({ command }) => ({
   base: command === 'serve' ? '/' : '/auth/',
   plugins: [react()],
   server: {
-    // 인증 서버(4840)와 구분되는 React 개발 포트 대역에서 실행합니다.
-    port: 5850,
+    // 화면 접속 포트(4840)에서 React를 제공하고 인증 API는 백엔드(5840)로 전달합니다.
+    port: 4840,
     strictPort: true,
     proxy: {
       // React 화면은 Vite에서 제공하고 OAuth 요청은 Spring Boot로 전달합니다.
-      '/oauth2': 'http://localhost:4840',
-      '/login/oauth2': 'http://localhost:4840',
+      '/oauth2': 'http://localhost:5840',
+      '/login/oauth2': 'http://localhost:5840',
     },
   },
 }));

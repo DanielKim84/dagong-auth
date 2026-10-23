@@ -41,7 +41,6 @@ public class AccountAdminAction {
 
     protected AccountAdminAction() {}
 
-    /** Administrator actions retained for investigation and appeal history. */
     /** 문의나 이의 제기를 확인할 수 있도록 기록하는 관리자 조치 종류입니다. */
     public enum Action {
         BLOCK,

@@ -24,18 +24,24 @@ dagong-auth/
 │  │  └─ styles/login.css
 │  ├─ public/assets/   로그인 화면 이미지
 │  └─ package.json
+├─ assets/             Kakao Developers 앱 아이콘 원본
+├─ .run/               공유 IntelliJ 실행 구성
 ├─ build.gradle        루트 집계
 ├─ settings.gradle
 └─ gradlew.bat
 ```
 
-frontend/index.html은 React 진입 HTML이며 화면 코드는 LoginPage.tsx에 있습니다.
+frontend/index.html은 React 진입 HTML이며 화면 코드는 LoginPage.tsx에 있습니다. Kakao Developers에 등록하는 앱 아이콘은 `assets/kakao-developers-app-icon.png`에 보관하며, 웹 화면의 정적 이미지와 분리해 번들에 포함하지 않습니다.
 
 ## 처음 실행
 
 1. IntelliJ에서 루트 build.gradle을 다시 불러옵니다. Java SDK는 21입니다.
 2. frontend 폴더에서 npm ci를 실행합니다. Node는 Vite 7 요구 버전인 20.19+ 또는 22.12+를 사용합니다.
-3. PostgreSQL을 실행하고 루트의 `.env`를 `.env.example`에서 복사해 DB 접속 정보와 고유한 서명 키 비밀번호를 설정합니다. 그 비밀번호로 로컬 서명 키를 한 번 생성합니다.
+3. PostgreSQL을 실행하고 루트의 `.env`를 `.env.example`에서 복사해 DB 접속 정보, 고유한 서명 키 비밀번호, Kakao REST API 키와 Client Secret을 설정합니다. Kakao Developers에서 카카오 로그인을 켜고 아래 Redirect URI를 등록합니다. 그 비밀번호로 로컬 서명 키를 한 번 생성합니다.
+
+   ```text
+   http://localhost:4840/login/oauth2/code/kakao
+   ```
 
    ```powershell
    New-Item -ItemType Directory "$env:USERPROFILE\.dagong-auth" -Force
@@ -45,28 +51,28 @@ frontend/index.html은 React 진입 HTML이며 화면 코드는 LoginPage.tsx에
 
    최초 실행 시 V1 스키마가 적용됩니다.
 4. Gradle 창에서 backend → Tasks → application → bootRun을 실행합니다.
-   터미널에서는 루트에서 .\gradlew.bat :backend:bootRun 을 실행합니다.
-5. http://localhost:4840/login 접속.
+   터미널에서는 루트에서 .\gradlew.bat :backend:bootRun 을 실행합니다. 인증 API는 5840 포트에서 시작합니다.
+5. React 화면 개발 서버를 실행한 뒤 http://localhost:4840/login 에 접속합니다.
 
 processResources가 React 빌드를 자동 실행하고 결과를 backend/build/resources/main/static/auth에 포함합니다. IntelliJ Java 클래스 직접 실행보다 Gradle bootRun을 권장합니다. 직접 실행 시에는 먼저 :backend:classes를 실행하고 backend 모듈 classpath를 사용하세요.
 
 ## 화면 개발
 
-프로젝트 루트 또는 frontend에서 npm run dev 실행 후 http://localhost:5850/login 접속합니다. React 화면 수정은 즉시 반영됩니다.
-공통 인증 서버는 4840, React 개발 화면은 5850에서 실행합니다. 개발 화면의 OAuth 요청은 Vite가 인증 서버로 전달하며, 맛다공의 4845와 겹치지 않습니다.
-실제 OAuth callback은 제공자 연결 작업 시 확정해야 합니다. Gradle 빌드에 포함된 React 로그인 화면과 인증 서버는 http://localhost:4840/login 에서 제공합니다.
+프로젝트 루트 또는 frontend에서 npm run dev 실행 후 http://localhost:4840/login 접속합니다. React 화면 수정은 즉시 반영됩니다.
+화면은 4840, 인증 API 서버는 5840에서 실행합니다. Vite가 OAuth 요청과 Kakao callback 경로를 인증 API 서버로 전달합니다. Kakao Developers의 callback 주소는 http://localhost:4840/login/oauth2/code/kakao 입니다.
 
 ## 배포
 
 frontend에서 npm ci 실행 후 루트에서 .\gradlew.bat :backend:bootJar 실행.
 backend/build/libs/dagong-auth.jar에 React 빌드가 포함됩니다.
-Dockerfile도 이 JAR를 사용합니다. 운영 화면에 Vite 개발 서버는 필요 없습니다.
+Dockerfile도 이 JAR를 사용합니다. 로컬 화면 개발에는 Vite 서버(4840)를 사용하며, 통합 JAR는 자체 정적 화면도 제공합니다.
 프런트 빌드 결과를 src/main/resources에 수동 복사하지 않습니다.
 
 ## 현재 기능 범위
 
 - React 로그인 화면: 시안의 로고·배경·캐릭터가 이어지는 상단, 네이버·카카오·Apple 버튼.
-- 버튼은 연결 전 안내만 표시합니다. 실제 소셜 인증과 맛다공 콜백은 아직 미구현입니다.
+- Kakao OAuth2 로그인은 공통 계정을 생성하거나 기존 계정에 연결합니다. REST API 키와 Client Secret은 루트 `.env`에 설정하고, Kakao Developers에 위 Redirect URI를 등록해야 실제 인증할 수 있습니다.
+- 네이버·Apple 버튼은 아직 연결 안내를 표시합니다. 맛다공 콜백은 아직 미구현입니다.
 - /login?error, /login?logout 안내를 React 상태로 표시합니다.
 - 계정·소셜 연결·서비스 이용 현황·관리자 조치·OAuth 인가/동의 저장소가 V1 스키마에 포함됩니다.
 - 개발 OAuth client_id: matdagong-web-dev, Authorization Code + PKCE, redirect_uri 기본값: http://localhost:4845/auth/callback.

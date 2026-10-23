@@ -2,10 +2,12 @@
 .idea/
 *.iml
 .env
+**/.env
+**/.env.*
+!.env.example
 *.p12
 
 **/build/
 **/node_modules/
 frontend/dist/
 *.tsbuildinfo
-**/.env.local
