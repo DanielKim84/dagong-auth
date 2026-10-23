@@ -13,7 +13,7 @@ const appleIconPath =
 
 interface SocialLoginButtonProps {
   provider: SocialProvider;
-  onUnavailable: (message: string) => void;
+  onUnavailable: (providerName: string) => void;
 }
 
 export default function SocialLoginButton({ provider, onUnavailable }: SocialLoginButtonProps) {
@@ -28,7 +28,7 @@ export default function SocialLoginButton({ provider, onUnavailable }: SocialLog
     }
 
     // 아직 연동하지 않은 다른 제공자는 기존 안내를 유지합니다.
-    onUnavailable(`${providerName} 로그인은 아직 연결 전이에요. 연결이 완료되면 여기서 시작할 수 있어요.`);
+    onUnavailable(providerName);
   }
 
   return (

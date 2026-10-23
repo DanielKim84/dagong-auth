@@ -145,14 +145,103 @@ button:focus-visible {
   background: #fff;
 }
 
-.login-status {
-  /* 안내 영역 높이를 미리 확보해 버튼을 눌러도 로그인 카드 크기가 바뀌지 않게 합니다. */
-  min-height: 3.2em;
-  margin: 9px 0 0;
-  color: #a74e2d;
+.global-notice {
+  position: fixed;
+  left: 50%;
+  bottom: calc(20px + env(safe-area-inset-bottom));
+  z-index: 1000;
+  display: flex;
+  width: min(410px, calc(100% - 28px));
+  min-height: 72px;
+  align-items: center;
+  gap: 12px;
+  transform: translateX(-50%);
+  border: 1px solid #f0dfca;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #fffefa, #fff8ed);
+  padding: 12px 13px;
+  color: #4d3027;
+  text-align: left;
+  box-shadow: 0 12px 34px #5a301b24, 0 2px 7px #5a301b0d;
+  animation: notice-enter 240ms cubic-bezier(.2, .75, .25, 1);
+}
+
+.global-notice__icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  flex: none;
+  place-items: center;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #ff8050, #f04c3c);
+  color: #fff;
+  box-shadow: inset 0 1px 0 #ffffff66, 0 4px 9px #e14c352b;
+}
+
+.global-notice__icon svg {
+  width: 21px;
+  height: 21px;
+}
+
+.global-notice--success .global-notice__icon {
+  background: linear-gradient(145deg, #65b77a, #31935a);
+}
+
+.global-notice--error .global-notice__icon {
+  background: linear-gradient(145deg, #f17969, #d84a45);
+}
+
+.global-notice__copy {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 4px;
+}
+
+.global-notice__copy b {
+  font-size: 13px;
+  font-weight: 750;
+  letter-spacing: -.25px;
+}
+
+.global-notice__copy span {
+  color: #8d776b;
   font-size: 11px;
-  line-height: 1.6;
+  line-height: 1.5;
   overflow-wrap: anywhere;
+}
+
+.global-notice__close {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex: none;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: #f5eadc;
+  padding: 6px;
+  color: #9d8576;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.global-notice__close svg {
+  width: 15px;
+  height: 15px;
+}
+
+.global-notice__close:hover {
+  background: #ecddcb;
+  color: #5c3e31;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .global-notice { animation: none; }
+}
+
+@keyframes notice-enter {
+  from { opacity: 0; transform: translate(-50%, 12px) scale(.98); }
+  to { opacity: 1; transform: translate(-50%, 0) scale(1); }
 }
 
 .account-footer {
