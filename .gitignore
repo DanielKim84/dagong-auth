@@ -1,0 +1,11 @@
+.gradle/
+.idea/
+*.iml
+.env
+*.p12
+
+**/build/
+**/node_modules/
+frontend/dist/
+*.tsbuildinfo
+**/.env.local

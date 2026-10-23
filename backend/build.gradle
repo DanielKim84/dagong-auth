@@ -1,0 +1,63 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.5.7'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.dagong'
+version = '0.1.0-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-authorization-server'
+    implementation 'org.flywaydb:flyway-core'
+    implementation 'org.flywaydb:flyway-database-postgresql'
+    runtimeOnly 'org.postgresql:postgresql'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+def frontendDirectory = rootProject.file('frontend')
+
+// React를 먼저 빌드해 Spring Boot가 로그인 화면을 /auth 경로에서 제공하도록 합니다.
+tasks.register('buildFrontend', Exec) {
+    workingDir frontendDirectory
+    inputs.files(fileTree(new File(frontendDirectory, 'src')))
+    inputs.files(fileTree(new File(frontendDirectory, 'public')))
+    inputs.files(['package.json', 'package-lock.json', 'index.html', 'vite.config.ts', 'tsconfig.json']
+            .collect { new File(frontendDirectory, it) })
+    outputs.dir new File(frontendDirectory, 'dist')
+
+    if (System.getProperty('os.name').toLowerCase().contains('windows')) {
+        commandLine 'cmd', '/c', 'npm', 'run', 'build'
+    } else {
+        commandLine 'npm', 'run', 'build'
+    }
+}
+
+tasks.named('processResources') {
+    dependsOn 'buildFrontend'
+    from(new File(frontendDirectory, 'dist')) {
+        into 'static/auth'
+    }
+}
+
+tasks.named('bootJar') {
+    archiveFileName = 'dagong-auth.jar'
+}
