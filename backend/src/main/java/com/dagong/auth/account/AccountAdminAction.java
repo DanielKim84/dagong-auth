@@ -17,26 +17,27 @@ import java.util.UUID;
 @Table(name = "account_admin_actions")
 public class AccountAdminAction {
     @Id
+    @Column(name = "action_id")
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "account_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = false)
     private Account account;
 
-    @Column(name = "actor_id", nullable = false, length = 160)
+    @Column(name = "admin_id", nullable = false, length = 160)
     private String actorId;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 32)
+    @Column(name = "action_cd", nullable = false, length = 32)
     private Action action;
 
-    @Column(length = 500)
+    @Column(name = "rsn", length = 500)
     private String reason;
 
-    @Column(name = "created_at", nullable = false)
+    @Column(name = "action_dt", nullable = false)
     private OffsetDateTime createdAt;
 
-    @Column(name = "service_code", length = 32)
+    @Column(name = "svc_cd", length = 32)
     private String serviceCode;
 
     protected AccountAdminAction() {}

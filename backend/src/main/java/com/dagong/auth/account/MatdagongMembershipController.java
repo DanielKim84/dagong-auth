@@ -34,19 +34,23 @@ public class MatdagongMembershipController {
     @GetMapping
     public MembershipStatus status(@AuthenticationPrincipal Jwt jwt) {
         UUID accountId = accountId(jwt);
+        // 관리자 화면에서 서비스별 최근 이용 시각을 볼 수 있도록 진입 시각을 갱신합니다.
+        jdbcTemplate.update(
+                "UPDATE account_services SET last_access_dt = now() WHERE user_id = ? AND svc_cd = 'MATDAGONG'",
+                accountId);
         List<MembershipStatus> rows = jdbcTemplate.query(
                 """
-                SELECT a.display_name, a.email, s.status
+                SELECT a.user_nm, a.email, s.svc_st
                 FROM accounts a
                 LEFT JOIN account_services s
-                  ON s.account_id = a.id AND s.service_code = 'MATDAGONG'
-                WHERE a.id = ?
+                  ON s.user_id = a.user_id AND s.svc_cd = 'MATDAGONG'
+                WHERE a.user_id = ?
                 """,
                 (resultSet, rowNumber) -> new MembershipStatus(
-                        resultSet.getString("display_name"),
+                        resultSet.getString("user_nm"),
                         resultSet.getString("email"),
-                        resultSet.getString("status"),
-                        "ACTIVE".equals(resultSet.getString("status"))),
+                        resultSet.getString("svc_st"),
+                        "ACTIVE".equals(resultSet.getString("svc_st"))),
                 accountId);
         if (rows.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "공통 계정을 찾을 수 없습니다.");
 
@@ -74,22 +78,22 @@ public class MatdagongMembershipController {
         }
 
         jdbcTemplate.update(
-                "UPDATE accounts SET display_name = ?, email = ?, updated_at = now() WHERE id = ?",
+                "UPDATE accounts SET user_nm = ?, email = ?, upd_dt = now() WHERE user_id = ?",
                 displayName, email, accountId);
         int updated = jdbcTemplate.update(
                 """
-                INSERT INTO account_services (id, account_id, service_code, status, joined_at)
+                INSERT INTO account_services (membership_id, user_id, svc_cd, svc_st, join_dt)
                 VALUES (?, ?, 'MATDAGONG', 'ACTIVE', now())
-                ON CONFLICT (account_id, service_code) DO UPDATE
-                SET status = 'ACTIVE', joined_at = now(),
-                    withdrawal_requested_at = NULL, withdrawn_at = NULL
-                WHERE account_services.status IN ('WITHDRAWAL_PENDING', 'WITHDRAWN')
+                ON CONFLICT (user_id, svc_cd) DO UPDATE
+                SET svc_st = 'ACTIVE', join_dt = now(),
+                    del_req_dt = NULL, del_dt = NULL
+                WHERE account_services.svc_st IN ('WITHDRAWAL_PENDING', 'WITHDRAWN')
                 """,
                 UUID.randomUUID(), accountId);
         if (updated == 0) {
             // 이미 가입된 경우는 중복 제출로 보고 성공 처리합니다. BLOCKED 상태는 가입시킬 수 없습니다.
             String status = jdbcTemplate.queryForObject(
-                    "SELECT status FROM account_services WHERE account_id = ? AND service_code = 'MATDAGONG'",
+                    "SELECT svc_st FROM account_services WHERE user_id = ? AND svc_cd = 'MATDAGONG'",
                     String.class, accountId);
             if (!"ACTIVE".equals(status)) {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "맛다공 이용이 제한된 계정입니다.");

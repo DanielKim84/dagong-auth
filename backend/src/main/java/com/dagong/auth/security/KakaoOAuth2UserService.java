@@ -43,15 +43,8 @@ public class KakaoOAuth2UserService implements OAuth2UserService<OAuth2UserReque
         String nickname = firstNonBlank(
                 stringValue(profile.get("nickname")),
                 stringValue(properties.get("nickname")));
-        String providerEmail = stringValue(kakaoAccount.get("email"));
-        boolean emailVerified = Boolean.TRUE.equals(kakaoAccount.get("is_email_valid"))
-                && Boolean.TRUE.equals(kakaoAccount.get("is_email_verified"));
 
-        SocialAccountService.AccountIdentity identity = socialAccountService.authenticateKakao(
-                providerUserId,
-                nickname,
-                providerEmail,
-                emailVerified);
+        SocialAccountService.AccountIdentity identity = socialAccountService.authenticateKakao(providerUserId, nickname);
         if (identity.status() != AccountStatus.ACTIVE) {
             throw new OAuth2AuthenticationException(new OAuth2Error("account_not_active"));
         }

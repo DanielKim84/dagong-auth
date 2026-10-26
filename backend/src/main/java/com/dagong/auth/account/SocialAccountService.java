@@ -17,39 +17,35 @@ public class SocialAccountService {
 
     /** Kakao 회원번호로 계정을 찾거나 생성합니다. 이메일은 계정 연락처로 자동 사용하지 않습니다. */
     @Transactional
-    public AccountIdentity authenticateKakao(
-            String providerUserId, String nickname, String providerEmail, boolean providerEmailVerified) {
+    public AccountIdentity authenticateKakao(String providerUserId, String nickname) {
         List<AccountIdentity> identities = jdbcTemplate.query(
                 """
-                SELECT a.id, a.status, si.id AS social_identity_id
+                SELECT a.user_id, a.user_st, si.social_id
                 FROM social_identities si
-                JOIN accounts a ON a.id = si.account_id
-                WHERE si.provider = 'KAKAO'
-                  AND si.provider_user_id = ?
-                  AND si.disconnected_at IS NULL
+                JOIN accounts a ON a.user_id = si.user_id
+                WHERE si.provider_cd = 'KAKAO'
+                  AND si.provider_uid = ?
+                  AND si.unlink_dt IS NULL
                 FOR UPDATE OF a, si
                 """,
                 (resultSet, rowNumber) -> new AccountIdentity(
-                        UUID.fromString(resultSet.getString("id")),
-                        AccountStatus.valueOf(resultSet.getString("status")),
-                        UUID.fromString(resultSet.getString("social_identity_id"))),
+                        UUID.fromString(resultSet.getString("user_id")),
+                        AccountStatus.valueOf(resultSet.getString("user_st")),
+                        UUID.fromString(resultSet.getString("social_id"))),
                 providerUserId);
 
         if (!identities.isEmpty()) {
             AccountIdentity identity = identities.get(0);
             if (identity.status() == AccountStatus.ACTIVE) {
                 jdbcTemplate.update(
-                        "UPDATE accounts SET last_login_at = now(), updated_at = now() WHERE id = ?",
+                        "UPDATE accounts SET last_login_dt = now(), upd_dt = now() WHERE user_id = ?",
                         identity.accountId());
                 jdbcTemplate.update(
                         """
                         UPDATE social_identities
-                        SET provider_email = ?, provider_email_verified = ?,
-                            last_authenticated_at = now(), updated_at = now()
-                        WHERE id = ? AND disconnected_at IS NULL
+                        SET last_auth_dt = now()
+                        WHERE social_id = ? AND unlink_dt IS NULL
                         """,
-                        providerEmail,
-                        providerEmailVerified,
                         identity.socialIdentityId());
             }
             return identity;
@@ -62,7 +58,7 @@ public class SocialAccountService {
         // 이메일은 사용자가 선택적으로 등록하는 연락처이므로 소셜 계정의 이메일로 자동 채우지 않습니다.
         jdbcTemplate.update(
                 """
-                INSERT INTO accounts (id, display_name, status, created_at, updated_at, last_login_at)
+                INSERT INTO accounts (user_id, user_nm, user_st, reg_dt, upd_dt, last_login_dt)
                 VALUES (?, ?, 'ACTIVE', now(), now(), now())
                 """,
                 accountId,
@@ -70,15 +66,12 @@ public class SocialAccountService {
         jdbcTemplate.update(
                 """
                 INSERT INTO social_identities (
-                    id, account_id, provider, provider_user_id, provider_email,
-                    provider_email_verified, created_at, updated_at, last_authenticated_at
-                ) VALUES (?, ?, 'KAKAO', ?, ?, ?, now(), now(), now())
+                    social_id, user_id, provider_cd, provider_uid, reg_dt, last_auth_dt
+                ) VALUES (?, ?, 'KAKAO', ?, now(), now())
                 """,
                 socialIdentityId,
                 accountId,
-                providerUserId,
-                providerEmail,
-                providerEmailVerified);
+                providerUserId);
 
         return new AccountIdentity(accountId, AccountStatus.ACTIVE, socialIdentityId);
     }

@@ -15,34 +15,26 @@ import java.util.UUID;
 @Table(name = "social_identities")
 public class SocialIdentity {
     @Id
+    @Column(name = "social_id")
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "account_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = false)
     private Account account;
 
-    @Column(nullable = false, length = 32)
+    @Column(name = "provider_cd", nullable = false, length = 32)
     private String provider;
 
-    @Column(name = "provider_user_id", nullable = false, length = 255)
+    @Column(name = "provider_uid", nullable = false, length = 255)
     private String providerUserId;
 
-    @Column(name = "provider_email", length = 320)
-    private String providerEmail;
-
-    @Column(name = "provider_email_verified", nullable = false)
-    private boolean providerEmailVerified;
-
-    @Column(name = "created_at", nullable = false)
+    @Column(name = "reg_dt", nullable = false)
     private OffsetDateTime createdAt;
 
-    @Column(name = "updated_at", nullable = false)
-    private OffsetDateTime updatedAt;
-
-    @Column(name = "last_authenticated_at")
+    @Column(name = "last_auth_dt")
     private OffsetDateTime lastAuthenticatedAt;
 
-    @Column(name = "disconnected_at")
+    @Column(name = "unlink_dt")
     private OffsetDateTime disconnectedAt;
 
     protected SocialIdentity() {}
@@ -63,20 +55,8 @@ public class SocialIdentity {
         return providerUserId;
     }
 
-    public String getProviderEmail() {
-        return providerEmail;
-    }
-
-    public boolean isProviderEmailVerified() {
-        return providerEmailVerified;
-    }
-
     public OffsetDateTime getCreatedAt() {
         return createdAt;
-    }
-
-    public OffsetDateTime getUpdatedAt() {
-        return updatedAt;
     }
 
     public OffsetDateTime getLastAuthenticatedAt() {

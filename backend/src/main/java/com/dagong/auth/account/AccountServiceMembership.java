@@ -18,34 +18,35 @@ import java.util.UUID;
 @Table(
         name = "account_services",
         uniqueConstraints = @UniqueConstraint(
-                name = "uk_account_services_account_service",
-                columnNames = {"account_id", "service_code"}))
+                name = "uk_account_services_user_svc",
+                columnNames = {"user_id", "svc_cd"}))
 public class AccountServiceMembership {
     @Id
+    @Column(name = "membership_id")
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "account_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = false)
     private Account account;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "service_code", nullable = false, length = 32)
+    @Column(name = "svc_cd", nullable = false, length = 32)
     private ServiceCode serviceCode;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 24)
+    @Column(name = "svc_st", nullable = false, length = 24)
     private Status status;
 
-    @Column(name = "joined_at", nullable = false)
+    @Column(name = "join_dt", nullable = false)
     private OffsetDateTime joinedAt;
 
-    @Column(name = "withdrawal_requested_at")
+    @Column(name = "del_req_dt")
     private OffsetDateTime withdrawalRequestedAt;
 
-    @Column(name = "withdrawn_at")
+    @Column(name = "del_dt")
     private OffsetDateTime withdrawnAt;
 
-    @Column(name = "last_accessed_at")
+    @Column(name = "last_access_dt")
     private OffsetDateTime lastAccessedAt;
 
     protected AccountServiceMembership() {}

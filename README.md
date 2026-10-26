@@ -49,7 +49,7 @@ frontend/index.html은 React 진입 HTML이며 화면 코드는 LoginPage.tsx에
    keytool -genkeypair -alias dagong-auth-signing -keyalg RSA -keysize 2048 -storetype PKCS12 -keystore "$env:USERPROFILE\.dagong-auth\auth-signing.p12" -storepass $keyPassword -keypass $keyPassword -dname "CN=Dagong Auth Development" -validity 3650
    ```
 
-   최초 실행 시 V1 스키마가 적용됩니다.
+   최초 실행 시 Flyway가 V1부터 현재 버전까지 스키마를 순서대로 적용합니다.
 4. Gradle 창에서 backend → Tasks → application → bootRun을 실행합니다.
    터미널에서는 루트에서 .\gradlew.bat :backend:bootRun 을 실행합니다. 인증 API는 5840 포트에서 시작합니다.
 5. React 화면 개발 서버를 실행한 뒤 http://localhost:4840/login 에 접속합니다.
@@ -83,6 +83,22 @@ Dockerfile도 이 JAR를 사용합니다. 로컬 화면 개발에는 Vite 서버
 ## DB 경계
 
 공통 인증 서버만 dagong_auth DB에 접근합니다. 맛다공·여다공은 공통 사용자 ID와 인증 서버가 발급한 토큰으로 연동합니다.
+
+## 여러 PC에서 공유 개발 DB 사용
+
+Flyway는 Git 기능이 아니라 Spring Boot에 연결한 데이터베이스 마이그레이션 도구입니다. Git은 마이그레이션 SQL 파일을 저장하고 변경 이력을 관리하며, Flyway는 앱 시작 시 `backend/src/main/resources/db/migration`의 `V1__...sql`, `V2__...sql` 파일을 순서대로 실행하고 `flyway_schema_history`에 적용 기록을 남깁니다. 현재 개발 PC에서는 `V1__initial_sso_schema.sql`과 `V2__rebuild_account_schema.sql`이 사용됩니다.
+
+회사와 집에서 같은 테스트 데이터를 이어서 사용하도록 Neon 무료 프로젝트 `dagong`의 개발 데이터베이스를 연결했습니다. 프로젝트는 싱가포르 리전이고, DB는 `dagong_auth_dev`, 앱 계정은 `dagong_auth_app`입니다. Spring Boot와 Flyway가 사용하는 직접 연결 주소는 다음과 같습니다. 두 PC의 루트 `.env`에 이 주소와 사용자, Neon에서 발급한 비밀번호를 설정합니다. 실제 비밀번호는 Git에 올리지 않는 `.env`에만 둡니다.
+
+```text
+DB_URL=jdbc:postgresql://<Neon 직접 연결 호스트>:5432/dagong_auth_dev?sslmode=require
+DB_USERNAME=dagong_auth_app
+DB_PASSWORD=<Neon에서 받은 앱 계정 비밀번호>
+```
+
+Neon 앱 계정 비밀번호 파일은 이 PC의 `Downloads\\dagong-auth-neon-credentials.env`에 내려받았습니다. 다른 PC에서는 이 파일을 안전한 방법으로 옮겨 `PGPASSWORD` 값을 `.env`의 `DB_PASSWORD`에 넣거나, Neon 콘솔에서 앱 계정 비밀번호를 재설정해 두 PC의 `.env`를 모두 갱신합니다. `.env` 전체에는 카카오 키 등 다른 비밀도 있으니 Git에 추가하지 않습니다.
+
+원격 DB에 처음 연결해 앱을 시작하면 Flyway가 아직 적용되지 않은 마이그레이션을 실행합니다. 현재 원격 DB에는 V1과 V2가 적용됐으며, V2는 기존 계정·소셜 연결·서비스 가입·관리자 조치와 OAuth 인가/동의 테스트 데이터를 비우고 새 계정 스키마를 만듭니다. 따라서 이 DB는 새 테스트 데이터를 쌓는 용도로 사용합니다. Neon 연결 문자열은 TLS를 요구하며, 개발용 테스트 데이터만 저장합니다.
 
 ## 계정 데이터
 
