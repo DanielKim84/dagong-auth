@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import LoginHero from '../components/LoginHero';
-import SocialLoginButton from '../components/SocialLoginButton';
+import SocialLoginButton, { type SocialProvider } from '../components/SocialLoginButton';
 import AccountFooter from '../components/AccountFooter';
 import NoticeToast, { type NoticeKind } from '../components/NoticeToast';
 
 type Notice = { kind: NoticeKind; title: string; message: string };
+const socialProviders: SocialProvider[] = ['naver', 'kakao', 'apple'];
 
 function initialNotice(): Notice | null {
   const url = new URL(window.location.href);
@@ -48,30 +49,17 @@ export default function LoginPage() {
       <section className="login-content" aria-label="소셜 계정 로그인">
         <p className="tagline">맛있는 걸 함께하는 공간</p>
         <div className="social-buttons">
-          <SocialLoginButton
-            provider="naver"
-            onUnavailable={(providerName) => setNotice({
-              kind: 'info',
-              title: `${providerName} 로그인은 준비 중이에요`,
-              message: '지금은 카카오로 가입하고 로그인할 수 있어요.',
-            })}
-          />
-          <SocialLoginButton
-            provider="kakao"
-            onUnavailable={(providerName) => setNotice({
-              kind: 'info',
-              title: `${providerName} 로그인은 준비 중이에요`,
-              message: '지금은 카카오로 가입하고 로그인할 수 있어요.',
-            })}
-          />
-          <SocialLoginButton
-            provider="apple"
-            onUnavailable={(providerName) => setNotice({
-              kind: 'info',
-              title: `${providerName} 로그인은 준비 중이에요`,
-              message: '지금은 카카오로 가입하고 로그인할 수 있어요.',
-            })}
-          />
+          {socialProviders.map((provider) => (
+            <SocialLoginButton
+              key={provider}
+              provider={provider}
+              onUnavailable={(providerName) => setNotice({
+                kind: 'info',
+                title: `${providerName} 로그인은 준비 중이에요`,
+                message: '지금은 카카오로 가입하고 로그인할 수 있어요.',
+              })}
+            />
+          ))}
         </div>
       </section>
       <AccountFooter />

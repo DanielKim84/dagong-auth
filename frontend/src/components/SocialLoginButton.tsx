@@ -27,7 +27,6 @@ export default function SocialLoginButton({ provider, onUnavailable }: SocialLog
       return;
     }
 
-    // 아직 연동하지 않은 다른 제공자는 기존 안내를 유지합니다.
     onUnavailable(providerName);
   }
 

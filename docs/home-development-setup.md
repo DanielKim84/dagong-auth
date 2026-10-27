@@ -17,7 +17,7 @@
 
 ## 집 컴퓨터 설정
 
-1. Java 21과 Node.js 20.19+ 또는 22.12+를 설치하고 저장소를 `C:\workspace\dagong-auth`에 clone하거나 최신 `main`을 pull 합니다.
+1. Java 21과 Node.js 24.22.1 이상(24 LTS 계열)을 설치하고 저장소를 `C:\workspace\dagong-auth`에 clone하거나 최신 `main`을 pull 합니다.
 2. 저장소 루트에서 `.env.example`을 `.env`로 복사합니다. `.env`는 Git에 올라가지 않습니다.
 3. `.env`의 `DB_URL`을 아래 주소로, `DB_USERNAME`을 집 전용 Neon 사용자로, `DB_PASSWORD`를 그 사용자의 비밀번호로 설정합니다.
 
@@ -42,7 +42,7 @@
    ```
 
 6. `frontend` 폴더에서 `npm ci`를 실행합니다. 백엔드는 저장소 루트에서 `.\gradlew.bat :backend:bootRun`, 화면은 `frontend` 폴더에서 `npm run dev`로 실행합니다.
-7. `http://localhost:4840/login`에 접속합니다. 앱 시작 로그에서 Neon 연결 성공을 확인합니다. 이미 원격 DB에 적용된 V1과 V2는 다시 초기화되지 않으며, 이후 추가되는 Flyway 마이그레이션이 자동 적용됩니다.
+7. `http://localhost:4840/login`에 접속합니다. 앱 시작 로그에서 Neon 연결과 Flyway 검증 성공을 확인합니다. 이미 적용된 마이그레이션은 건너뛰고 새 버전만 적용됩니다.
 
 ## 보안 주의
 

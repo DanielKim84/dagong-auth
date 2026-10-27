@@ -40,7 +40,7 @@ import org.springframework.security.oauth2.server.authorization.authentication.O
 import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
-import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
+import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
@@ -74,14 +74,14 @@ public class SecurityConfig {
         return http.build();
     }
 
-    /** 인증 서버 엔드포인트 보안을 적용하고, OAuth 클라이언트 등록을 서버 시작 단계에서 완료합니다. */
+    /** OAuth2·OIDC 엔드포인트를 보호하고 미인증 요청을 공통 로그인 화면으로 보냅니다. */
     @Bean
     @Order(1)
     SecurityFilterChain authorizationServerSecurityFilterChain(
             HttpSecurity http,
             @Value("${dagong.auth.login-page-url:/login}") String loginPageUrl) throws Exception {
         OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
-                OAuth2AuthorizationServerConfigurer.authorizationServer();
+                new OAuth2AuthorizationServerConfigurer();
 
         http.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
                 .with(authorizationServerConfigurer, server -> server
@@ -172,36 +172,34 @@ public class SecurityConfig {
         JdbcRegisteredClientRepository repository = new JdbcRegisteredClientRepository(jdbcOperations);
 
         RegisteredClient existingClient = repository.findByClientId(clientId);
+        RegisteredClient.Builder client;
+        ClientSettings.Builder settings;
         if (existingClient == null) {
-            RegisteredClient matdagong = RegisteredClient.withId(UUID.randomUUID().toString())
+            client = RegisteredClient.withId(UUID.randomUUID().toString())
                     .clientId(clientId)
                     .clientName("Matdagong Web (development)")
                     .clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
                     .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-                    .redirectUri(redirectUri)
                     .scope(OidcScopes.OPENID)
-                    .scope(OidcScopes.PROFILE)
-                    .clientSettings(ClientSettings.builder()
-                            .requireProofKey(true)
-                            // 맛다공은 공통계정의 공식 서비스이므로 기본 scope 동의 화면 없이 callback으로 이어갑니다.
-                            .requireAuthorizationConsent(false)
-                            .build())
-                    .build();
-            repository.save(matdagong);
+                    .scope(OidcScopes.PROFILE);
+            settings = ClientSettings.builder();
         } else {
-            // 기존 DB에 저장된 클라이언트 설정도 동의 화면 생략과 PKCE 필수 정책으로 맞춥니다.
-            ClientSettings clientSettings = ClientSettings.withSettings(existingClient.getClientSettings().getSettings())
-                    .requireProofKey(true)
-                    .requireAuthorizationConsent(false)
-                    .build();
-            repository.save(RegisteredClient.from(existingClient).clientSettings(clientSettings).build());
+            client = RegisteredClient.from(existingClient);
+            settings = ClientSettings.withSettings(existingClient.getClientSettings().getSettings());
         }
 
-        // save()는 신규 행을 추가하므로, 이미 등록된 클라이언트의 callback 주소는 SQL로 갱신합니다.
-        jdbcOperations.update(
-                "UPDATE oauth2_registered_client SET redirect_uris = ? WHERE client_id = ?",
-                redirectUri,
-                clientId);
+        // save()는 기존 ID를 갱신합니다. 예전 callback 주소를 제거하고 현재 설정 하나만 허용합니다.
+        repository.save(client
+                .redirectUris(uris -> {
+                    uris.clear();
+                    uris.add(redirectUri);
+                })
+                .clientSettings(settings
+                        .requireProofKey(true)
+                        // 공식 서비스인 맛다공은 별도 scope 동의 화면 없이 이어갑니다.
+                        .requireAuthorizationConsent(false)
+                        .build())
+                .build());
 
         return repository;
     }

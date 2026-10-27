@@ -12,13 +12,8 @@ spring:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/dagong_auth}
     username: ${DB_USERNAME:dagong_auth}
     password: ${DB_PASSWORD}
-  jpa:
-    open-in-view: false
-    hibernate:
-      # 스키마 변경은 Flyway가 담당하고 Hibernate는 엔티티와 DB 구조만 검증합니다.
-      ddl-auto: validate
   flyway:
-    # Hibernate가 엔티티 매핑을 검사하기 전에 스키마를 적용합니다.
+    # DB 구조와 설명은 버전별 SQL로 관리하고 서버 시작 시 적용합니다.
     enabled: true
   security:
     oauth2:

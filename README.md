@@ -2,6 +2,8 @@
 
 맛다공·여다공 공통 계정 및 SSO 서버. 프런트는 React + TypeScript, 백엔드는 Java 21 / Spring Boot입니다.
 
+계정과 OAuth 인가 정보는 JDBC로 읽고 저장하며, DB 구조와 칼럼 설명은 Flyway SQL에서 관리합니다.
+
 ## 구조
 
 ```text
@@ -10,7 +12,7 @@ dagong-auth/
 │  ├─ build.gradle
 │  └─ src/main/
 │     ├─ java/com/dagong/auth/
-│     │  ├─ account/     기존 계정 엔티티
+│     │  ├─ account/     공통 계정·소셜 연결·서비스 가입
 │     │  └─ security/    인증 설정과 로그인 진입 컨트롤러
 │     └─ resources/
 │        ├─ application.yml
@@ -36,7 +38,7 @@ frontend/index.html은 React 진입 HTML이며 화면 코드는 LoginPage.tsx에
 ## 처음 실행
 
 1. IntelliJ에서 루트 build.gradle을 다시 불러옵니다. Java SDK는 21입니다.
-2. frontend 폴더에서 npm ci를 실행합니다. Node는 Vite 7 요구 버전인 20.19+ 또는 22.12+를 사용합니다.
+2. Node.js 24.22.1 이상(24 LTS 계열)을 설치하고 frontend 폴더에서 npm ci를 실행합니다. 사용할 버전은 `frontend/.nvmrc`에 기록합니다.
 3. PostgreSQL을 실행하고 루트의 `.env`를 `.env.example`에서 복사해 DB 접속 정보, 고유한 서명 키 비밀번호, Kakao REST API 키와 Client Secret을 설정합니다. Kakao Developers에서 카카오 로그인을 켜고 아래 Redirect URI를 등록합니다. 그 비밀번호로 로컬 서명 키를 한 번 생성합니다.
 
    ```text
@@ -72,9 +74,9 @@ Dockerfile도 이 JAR를 사용합니다. 로컬 화면 개발에는 Vite 서버
 
 - React 로그인 화면: 시안의 로고·배경·캐릭터가 이어지는 상단, 네이버·카카오·Apple 버튼.
 - Kakao OAuth2 로그인은 공통 계정을 생성하거나 기존 계정에 연결합니다. REST API 키와 Client Secret은 루트 `.env`에 설정하고, Kakao Developers에 위 Redirect URI를 등록해야 실제 인증할 수 있습니다.
-- 네이버·Apple 버튼은 아직 연결 안내를 표시합니다. 맛다공 콜백은 아직 미구현입니다.
+- 네이버·Apple 버튼은 준비 중 안내를 표시합니다. 맛다공은 `/auth/callback`에서 인가 코드를 토큰으로 교환하고 서비스 가입 또는 홈으로 이어집니다.
 - /login?error, /login?logout 안내를 React 상태로 표시합니다.
-- 계정·소셜 연결·서비스 이용 현황·관리자 조치·OAuth 인가/동의 저장소가 V1 스키마에 포함됩니다.
+- 계정·소셜 연결·서비스 이용 현황·관리자 조치·OAuth 인가/동의 저장소는 Flyway 스크립트로 관리합니다.
 - 개발 OAuth client_id: matdagong-web-dev, Authorization Code + PKCE, redirect_uri 기본값: http://localhost:4845/auth/callback.
 - client 설정은 `dagong.auth.matdagong-client-id` / `dagong.auth.matdagong-redirect-uri`로 변경 가능합니다. 설정한 redirect URI는 서버 시작 시 개발용 client 항목에 반영됩니다.
 - 클라이언트·인가·동의 저장소는 PostgreSQL을 사용합니다. 개발용 RSA 서명 키는 사용자 홈의 PKCS12 파일에 저장해 재시작 뒤에도 유지됩니다.
@@ -88,7 +90,7 @@ Dockerfile도 이 JAR를 사용합니다. 로컬 화면 개발에는 Vite 서버
 
 집 컴퓨터에서 이어서 설정할 때는 [집 컴퓨터 개발 환경 설정 안내](docs/home-development-setup.md)를 따라갑니다. 이 안내는 저장소와 함께 Git으로 받을 수 있으며, 회사 컴퓨터의 비밀 파일을 복사할 필요가 없습니다.
 
-Flyway는 Git 기능이 아니라 Spring Boot에 연결한 데이터베이스 마이그레이션 도구입니다. Git은 마이그레이션 SQL 파일을 저장하고 변경 이력을 관리하며, Flyway는 앱 시작 시 `backend/src/main/resources/db/migration`의 `V1__...sql`, `V2__...sql` 파일을 순서대로 실행하고 `flyway_schema_history`에 적용 기록을 남깁니다. 현재 개발 PC에서는 `V1__initial_sso_schema.sql`과 `V2__rebuild_account_schema.sql`이 사용됩니다.
+Flyway는 Spring Boot에 연결한 데이터베이스 마이그레이션 도구입니다. Git은 SQL 파일을 보관하고, Flyway는 앱 시작 시 `backend/src/main/resources/db/migration`에서 아직 적용하지 않은 버전을 순서대로 실행합니다. 적용 기록은 `flyway_schema_history`에서 확인합니다. 이미 적용된 SQL은 수정하지 않고 새 버전 파일을 추가합니다.
 
 회사와 집에서 같은 테스트 데이터를 이어서 사용하도록 Neon 무료 프로젝트 `dagong`의 개발 데이터베이스를 연결했습니다. 프로젝트는 싱가포르 리전이고, DB는 `dagong_auth_dev`, 회사 PC의 앱 계정은 `dagong_auth_app`입니다. Spring Boot와 Flyway가 사용하는 직접 연결 주소는 다음과 같습니다. 각 PC의 루트 `.env`에 접속 정보를 설정하고, 실제 비밀번호는 Git에 올리지 않습니다.
 
@@ -100,7 +102,7 @@ DB_PASSWORD=<Neon에서 받은 앱 계정 비밀번호>
 
 각 PC의 비밀 값은 해당 PC에서 직접 설정합니다. 회사 PC의 `.env`나 Neon 자격 증명 다운로드 파일을 Git에 추가하거나 채팅에 붙여 넣지 않습니다. 집 PC 전용 DB 계정 설정과 `.env` 작성 방법은 위 안내 문서를 참고합니다.
 
-원격 DB에 처음 연결해 앱을 시작하면 Flyway가 아직 적용되지 않은 마이그레이션을 실행합니다. 현재 원격 DB에는 V1과 V2가 적용됐으며, V2는 기존 계정·소셜 연결·서비스 가입·관리자 조치와 OAuth 인가/동의 테스트 데이터를 비우고 새 계정 스키마를 만듭니다. 따라서 이 DB는 새 테스트 데이터를 쌓는 용도로 사용합니다. Neon 연결 문자열은 TLS를 요구하며, 개발용 테스트 데이터만 저장합니다.
+기존 원격 DB에 연결하면 Flyway가 적용을 마친 버전은 건너뜁니다. 초기 스키마 재정의는 V2에 기록돼 있으며, 이후 정리는 데이터를 보존하는 별도 마이그레이션으로 적용합니다. Neon 연결 문자열은 TLS를 요구하며, 개발용 테스트 데이터만 저장합니다.
 
 ## 계정 데이터
 
@@ -111,4 +113,4 @@ DB_PASSWORD=<Neon에서 받은 앱 계정 비밀번호>
 - `oauth2_registered_client`, `oauth2_authorization`, `oauth2_authorization_consent`: 서비스 클라이언트, 발급된 인가·토큰 상태, 사용자 동의를 저장해 서버 재시작 뒤에도 SSO 상태를 유지합니다.
 - 향후 본인 확인을 위해 전화번호와 CI 해시 필드를 비워 두었습니다. 본인 확인 연동이나 CI 값 저장은 현재 활성화되지 않았습니다. CI 원문은 저장하지 않습니다.
 
-`V1__initial_sso_schema.sql`은 개발 시작 시점의 전체 스키마입니다. 이메일은 선택 연락처이며 로그인 식별자가 아니므로, 같은 이메일을 가진 소셜 계정도 별도 계정으로 만들 수 있습니다. 한 공통 계정이 두 서비스 모두에 가입하면 `account_services`에 서비스별 행이 각각 생깁니다. 테이블·칼럼 설명은 PostgreSQL `COMMENT` 메타데이터에 기록됩니다.
+이메일은 선택 연락처이며 로그인 식별자가 아니므로, 같은 이메일을 가진 소셜 계정도 별도 계정으로 만들 수 있습니다. 한 공통 계정이 두 서비스 모두에 가입하면 `account_services`에 서비스별 행이 각각 생깁니다. 테이블·칼럼 설명은 PostgreSQL `COMMENT` 메타데이터에 기록됩니다.
