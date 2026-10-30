@@ -20,30 +20,36 @@ import org.springframework.transaction.annotation.Transactional;
 @RestController
 @RequestMapping("/api/v1/matdagong/membership")
 public class MatdagongMembershipController {
+    /** account_services.svc_cd에 저장하는 맛다공 서비스 코드입니다. */
+    private static final String SERVICE_CODE = "MATDAGONG";
+
     private final JdbcTemplate jdbcTemplate;
+    private final ActiveAccountChecker activeAccountChecker;
     private final String clientId;
 
     public MatdagongMembershipController(
             JdbcTemplate jdbcTemplate,
-            @Value("${dagong.auth.matdagong-client-id:matdagong-web-dev}") String clientId) {
+            ActiveAccountChecker activeAccountChecker,
+            @Value("${dagong.auth.matdagong-client-id}") String clientId) {
         this.jdbcTemplate = jdbcTemplate;
+        this.activeAccountChecker = activeAccountChecker;
         this.clientId = clientId;
     }
 
-    /** callback에서 공통 계정과 맛다공 서비스 가입 여부를 확인합니다. */
+    /** 맛다공 앱 진입(로그인 callback 포함) 때마다 공통 계정과 맛다공 서비스 가입 여부를 확인합니다. */
     @GetMapping
     public MembershipStatus status(@AuthenticationPrincipal Jwt jwt) {
         UUID accountId = accountId(jwt);
-        // 관리자 화면에서 서비스별 최근 이용 시각을 볼 수 있도록 진입 시각을 갱신합니다.
+        // 향후 관리자 화면에서 서비스별 최근 이용 시각을 볼 수 있도록 진입 시각을 갱신합니다.
         jdbcTemplate.update(
-                "UPDATE account_services SET last_access_dt = now() WHERE user_id = ? AND svc_cd = 'MATDAGONG'",
-                accountId);
+                "UPDATE account_services SET last_access_dt = now() WHERE user_id = ? AND svc_cd = ?",
+                accountId, SERVICE_CODE);
         List<MembershipStatus> rows = jdbcTemplate.query(
                 """
                 SELECT a.user_nm, a.email, s.svc_st
                 FROM accounts a
                 LEFT JOIN account_services s
-                  ON s.user_id = a.user_id AND s.svc_cd = 'MATDAGONG'
+                  ON s.user_id = a.user_id AND s.svc_cd = ?
                 WHERE a.user_id = ?
                 """,
                 (resultSet, rowNumber) -> new MembershipStatus(
@@ -51,7 +57,7 @@ public class MatdagongMembershipController {
                         resultSet.getString("email"),
                         resultSet.getString("svc_st"),
                         "ACTIVE".equals(resultSet.getString("svc_st"))),
-                accountId);
+                SERVICE_CODE, accountId);
         if (rows.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "공통 계정을 찾을 수 없습니다.");
 
         MembershipStatus current = rows.get(0);
@@ -83,18 +89,18 @@ public class MatdagongMembershipController {
         int updated = jdbcTemplate.update(
                 """
                 INSERT INTO account_services (membership_id, user_id, svc_cd, svc_st, join_dt)
-                VALUES (?, ?, 'MATDAGONG', 'ACTIVE', now())
+                VALUES (?, ?, ?, 'ACTIVE', now())
                 ON CONFLICT (user_id, svc_cd) DO UPDATE
                 SET svc_st = 'ACTIVE', join_dt = now(),
                     del_req_dt = NULL, del_dt = NULL
                 WHERE account_services.svc_st IN ('WITHDRAWAL_PENDING', 'WITHDRAWN')
                 """,
-                UUID.randomUUID(), accountId);
+                UUID.randomUUID(), accountId, SERVICE_CODE);
         if (updated == 0) {
             // 이미 가입된 경우는 중복 제출로 보고 성공 처리합니다. BLOCKED 상태는 가입시킬 수 없습니다.
             String status = jdbcTemplate.queryForObject(
-                    "SELECT svc_st FROM account_services WHERE user_id = ? AND svc_cd = 'MATDAGONG'",
-                    String.class, accountId);
+                    "SELECT svc_st FROM account_services WHERE user_id = ? AND svc_cd = ?",
+                    String.class, accountId, SERVICE_CODE);
             if (!"ACTIVE".equals(status)) {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "맛다공 이용이 제한된 계정입니다.");
             }
@@ -106,13 +112,20 @@ public class MatdagongMembershipController {
         if (jwt == null || !jwt.getAudience().contains(clientId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "맛다공 인증 토큰이 필요합니다.");
         }
+        UUID accountId;
         try {
-            return UUID.fromString(jwt.getSubject());
+            accountId = UUID.fromString(jwt.getSubject());
         } catch (IllegalArgumentException exception) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "계정 정보를 확인할 수 없습니다.");
         }
+        // 이미 발급된 토큰이라도 계정 전체가 차단·탈퇴됐다면 가입 확인과 가입을 진행하지 않습니다.
+        if (!activeAccountChecker.isActive(accountId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "이용이 제한된 계정입니다.");
+        }
+        return accountId;
     }
 
+    /** status는 맛다공 서비스 상태(svc_st)이며 가입 이력이 없으면 null입니다. registered는 ACTIVE일 때만 true입니다. */
     public record MembershipStatus(String displayName, String email, String status, boolean registered) {}
 
     public record JoinRequest(String displayName, String email) {}

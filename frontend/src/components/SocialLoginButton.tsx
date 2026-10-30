@@ -19,10 +19,10 @@ interface SocialLoginButtonProps {
 export default function SocialLoginButton({ provider, onUnavailable }: SocialLoginButtonProps) {
   const providerName = providerNames[provider];
 
-  // 화면 개발 서버(4840)와 인증 API 서버(5840)를 분리해 Kakao 인증은 백엔드에서 시작합니다.
+  // 현재는 Kakao만 연동했으며 네이버·Apple은 준비 중 안내를 표시합니다.
   function handleClick() {
     if (provider === 'kakao') {
-      // 개발 중에는 Vite가 5840으로 전달하고, 배포에서는 같은 서버가 이 경로를 처리합니다.
+      // Kakao 인증은 백엔드에서 시작합니다. 개발 중에는 Vite가 5840으로 전달하고, 배포에서는 같은 서버가 처리합니다.
       window.location.assign('/oauth2/authorization/kakao');
       return;
     }

@@ -10,7 +10,7 @@ export default defineConfig(({ command }) => ({
     port: 4840,
     strictPort: true,
     proxy: {
-      // React 화면은 Vite에서 제공하고 OAuth 요청은 Spring Boot로 전달합니다.
+      // Kakao 인증 시작(/oauth2/authorization/kakao)과 Kakao callback(/login/oauth2/code/kakao)을 전달합니다.
       '/oauth2': 'http://localhost:5840',
       '/login/oauth2': 'http://localhost:5840',
     },

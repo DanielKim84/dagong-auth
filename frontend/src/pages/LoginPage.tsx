@@ -11,7 +11,8 @@ function initialNotice(): Notice | null {
   const url = new URL(window.location.href);
   const parameters = url.searchParams;
 
-  // Spring Security가 로그인 실패나 로그아웃 뒤에 붙이는 query parameter를 화면 안내로 바꿉니다.
+  // 로그인 실패(?error)·로그아웃(?logout)·로그인 성공(?login=success, AUTH_LOGIN_SUCCESS_URL에서 지정) 뒤
+  // 붙는 query parameter를 화면 안내로 바꿉니다.
   let notice: Notice | null = null;
   if (parameters.has('error')) {
     notice = { kind: 'error', title: '로그인을 완료하지 못했어요', message: '잠시 후 다시 시도해 주세요.' };
@@ -28,14 +29,8 @@ export default function LoginPage() {
   const [notice, setNotice] = useState<Notice | null>(initialNotice);
 
   useEffect(() => {
+    if (initialNotice() === null) return;
     const url = new URL(window.location.href);
-    if (
-      !url.searchParams.has('error') &&
-      !url.searchParams.has('logout') &&
-      url.searchParams.get('login') !== 'success'
-    ) {
-      return;
-    }
     url.searchParams.delete('error');
     url.searchParams.delete('logout');
     url.searchParams.delete('login');

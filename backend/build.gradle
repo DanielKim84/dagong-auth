@@ -29,6 +29,8 @@ dependencies {
     runtimeOnly 'org.postgresql:postgresql'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
+    // Docker 없이 실제 PostgreSQL로 Flyway 스키마와 계정 상태 검사를 검증합니다.
+    testImplementation 'io.zonky.test:embedded-postgres:2.1.0'
 }
 
 tasks.named('test') {

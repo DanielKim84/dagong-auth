@@ -10,19 +10,21 @@
 dagong-auth/
 ├─ backend/
 │  ├─ build.gradle
-│  └─ src/main/
-│     ├─ java/com/dagong/auth/
-│     │  ├─ account/     공통 계정·소셜 연결·서비스 가입
-│     │  └─ security/    인증 설정과 로그인 진입 컨트롤러
-│     └─ resources/
-│        ├─ application.yml
-│        └─ db/migration/
+│  └─ src/
+│     ├─ main/
+│     │  ├─ java/com/dagong/auth/
+│     │  │  ├─ account/     공통 계정·소셜 연결·서비스 가입·계정 상태 확인
+│     │  │  └─ security/    인증 설정, 토큰 발급 규칙, 로그인·세션 컨트롤러
+│     │  └─ resources/
+│     │     ├─ application.yml
+│     │     └─ db/migration/
+│     └─ test/            내장 PostgreSQL로 Flyway 스키마와 토큰 발급 규칙 검증
 ├─ frontend/
 │  ├─ src/
 │  │  ├─ main.tsx       React 시작
 │  │  ├─ App.tsx
 │  │  ├─ pages/LoginPage.tsx
-│  │  ├─ components/    LoginHero, SocialLoginButton, AccountFooter
+│  │  ├─ components/    LoginHero, SocialLoginButton, AccountFooter, NoticeToast
 │  │  └─ styles/login.css
 │  ├─ public/assets/   로그인 화면 이미지
 │  └─ package.json
@@ -58,6 +60,8 @@ frontend/index.html은 React 진입 HTML이며 화면 코드는 LoginPage.tsx에
 
 processResources가 React 빌드를 자동 실행하고 결과를 backend/build/resources/main/static/auth에 포함합니다. IntelliJ Java 클래스 직접 실행보다 Gradle bootRun을 권장합니다. 직접 실행 시에는 먼저 :backend:classes를 실행하고 backend 모듈 classpath를 사용하세요.
 
+백엔드 테스트는 내장 PostgreSQL을 내려받아 실행하므로 Docker나 공유 DB가 필요 없습니다. React 빌드를 건너뛰려면 루트에서 `.\gradlew.bat :backend:test -x buildFrontend`를 실행합니다.
+
 ## 화면 개발
 
 프로젝트 루트 또는 frontend에서 npm run dev 실행 후 http://localhost:4840/login 접속합니다. React 화면 수정은 즉시 반영됩니다.
@@ -76,10 +80,13 @@ Dockerfile도 이 JAR를 사용합니다. 로컬 화면 개발에는 Vite 서버
 - Kakao OAuth2 로그인은 공통 계정을 생성하거나 기존 계정에 연결합니다. REST API 키와 Client Secret은 루트 `.env`에 설정하고, Kakao Developers에 위 Redirect URI를 등록해야 실제 인증할 수 있습니다.
 - 네이버·Apple 버튼은 준비 중 안내를 표시합니다. 맛다공은 `/auth/callback`에서 인가 코드를 토큰으로 교환하고 서비스 가입 또는 홈으로 이어집니다.
 - /login?error, /login?logout 안내를 React 상태로 표시합니다.
-- 계정·소셜 연결·서비스 이용 현황·관리자 조치·OAuth 인가/동의 저장소는 Flyway 스크립트로 관리합니다.
+- 계정·소셜 연결·서비스 이용 현황·관리자 조치·권한·OAuth 인가/동의 저장소는 Flyway 스크립트로 관리합니다.
 - 개발 OAuth client_id: matdagong-web-dev, Authorization Code + PKCE, redirect_uri 기본값: http://localhost:4845/auth/callback.
-- client 설정은 `dagong.auth.matdagong-client-id` / `dagong.auth.matdagong-redirect-uri`로 변경 가능합니다. 설정한 redirect URI는 서버 시작 시 개발용 client 항목에 반영됩니다.
-- 클라이언트·인가·동의 저장소는 PostgreSQL을 사용합니다. 개발용 RSA 서명 키는 사용자 홈의 PKCS12 파일에 저장해 재시작 뒤에도 유지됩니다.
+- client 설정은 `application.yml`의 `dagong.auth.matdagong-client-id` / `dagong.auth.matdagong-redirect-uri`로 변경 가능합니다. 설정한 redirect URI와 access token 수명은 서버 시작 시 개발용 client 항목에 반영됩니다.
+- access token 수명 기본값은 30분(`PT30M`)입니다. 브라우저 공개 클라이언트에는 refresh token을 발급하지 않으므로, 개발 PC에서만 `.env`의 `AUTH_ACCESS_TOKEN_TTL`(ISO-8601, 예: `PT8H`)로 늘립니다.
+- access token에는 client_id를 audience로, `account_roles`의 활성 권한(ADMIN, SUPER_TASTER)을 `roles` 클레임으로 넣습니다.
+- 차단(BLOCKED)·탈퇴 처리 중(DELETION_PENDING)·탈퇴(DELETED) 계정은 Kakao 로그인, SSO 세션으로 받는 인가 코드, 토큰 발급, 맛다공 가입 API(`/api/v1/matdagong/membership`)에서 모두 거부합니다. 이미 발급된 access token은 만료 전까지 서명상 유효하므로, 즉시 차단이 필요한 API는 맛다공 가입 API처럼 계정 상태를 따로 확인합니다.
+- 클라이언트·인가·동의 저장소는 PostgreSQL을 사용합니다. 개발용 RSA 서명 키는 사용자 홈의 PKCS12 파일에서 읽으므로 재시작 뒤에도 같은 키로 토큰을 검증할 수 있습니다.
 - 운영 배포에서는 `AUTH_KEYSTORE_PATH`와 `AUTH_KEYSTORE_PASSWORD`를 운영 비밀 관리 체계에 맞게 설정해야 합니다.
 
 ## DB 경계
@@ -108,8 +115,9 @@ DB_PASSWORD=<Neon에서 받은 앱 계정 비밀번호>
 
 - `accounts`: 공통 사용자 UUID, 선택 이메일, 계정 상태, 로그인·탈퇴·차단 시각을 보관합니다. 이메일 없이 소셜 계정을 만들 수 있습니다.
 - `social_identities`: 제공자와 제공자 사용자 ID를 연결합니다. 같은 제공자 계정은 한 계정에만 연결되며, 다른 제공자는 별도 계정으로 가입할 수 있습니다.
-- `account_admin_actions`: 관리자 차단·해제와 탈퇴 처리 이력을 기록합니다.
-- `account_services`: 계정의 맛다공·여다공별 가입 상태, 탈퇴 상태, 마지막 이용 시각을 기록합니다. 관리자는 서비스별 이용 현황을 조회할 수 있습니다.
+- `account_admin_actions`: 관리자 차단·해제와 탈퇴 처리 이력을 기록할 테이블입니다. 관리자 기능을 도입할 때 사용하며 현재는 기록하는 코드가 없습니다.
+- `account_services`: 계정의 맛다공·여다공별 가입 상태, 탈퇴 상태, 마지막 이용 시각을 기록합니다. 현재는 맛다공 가입과 최근 이용 시각만 기록하며, 여다공 가입과 관리자용 서비스별 이용 현황 조회는 이후에 연결합니다.
+- `account_roles`: 관리자(ADMIN)·슈퍼 맛객(SUPER_TASTER) 권한과 부여·회수 이력을 보관합니다. 토큰 발급 시 활성 권한을 읽으며, 권한 부여·회수 화면은 이후 관리자 서비스에서 제공합니다.
 - `oauth2_registered_client`, `oauth2_authorization`, `oauth2_authorization_consent`: 서비스 클라이언트, 발급된 인가·토큰 상태, 사용자 동의를 저장해 서버 재시작 뒤에도 SSO 상태를 유지합니다.
 - 향후 본인 확인을 위해 전화번호와 CI 해시 필드를 비워 두었습니다. 본인 확인 연동이나 CI 값 저장은 현재 활성화되지 않았습니다. CI 원문은 저장하지 않습니다.
 

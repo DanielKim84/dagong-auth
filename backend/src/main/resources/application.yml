@@ -42,10 +42,17 @@ logging:
 dagong:
   auth:
     issuer: ${AUTH_ISSUER:http://localhost:5840}
-    # 개발 화면은 Vite(4840)가 제공하고, API와 OAuth 엔드포인트만 이 서버(5840)가 처리합니다.
+    # 기본값은 통합 JAR가 제공하는 /login 화면입니다. 개발 PC에서는 .env로 Vite(4840) 화면 주소를 지정하고,
+    # 이 서버(5840)는 API와 OAuth 엔드포인트만 처리합니다.
     login-page-url: ${AUTH_LOGIN_PAGE_URL:/login}
     login-success-url: ${AUTH_LOGIN_SUCCESS_URL:/login}
     login-failure-url: ${AUTH_LOGIN_FAILURE_URL:/login?error}
     keystore-path: ${AUTH_KEYSTORE_PATH:${user.home}/.dagong-auth/auth-signing.p12}
     keystore-password: ${AUTH_KEYSTORE_PASSWORD}
     keystore-alias: ${AUTH_KEYSTORE_ALIAS:dagong-auth-signing}
+    # 맛다공 access token 수명(ISO-8601). refresh token이 없으므로 기본값은 짧게 둡니다.
+    access-token-ttl: ${AUTH_ACCESS_TOKEN_TTL:PT30M}
+    # 개발용 맛다공 공개 클라이언트. 서버 시작 시 oauth2_registered_client에 등록·동기화하며,
+    # 맛다공 가입 API는 이 client_id가 audience에 있는 토큰만 받습니다.
+    matdagong-client-id: matdagong-web-dev
+    matdagong-redirect-uri: http://localhost:4845/auth/callback
