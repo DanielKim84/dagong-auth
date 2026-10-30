@@ -1,7 +1,26 @@
+/* 맛다공 앱(frontend/src/theme/themes/default.css)과 같은 색·반경 값을 씁니다. */
 :root {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Malgun Gothic", sans-serif;
-  color: #4b241b;
-  background: #f5e8d7;
+  --neutral-0: #ffffff;
+  --neutral-50: #fff8f1;
+  --neutral-150: #f3e6db;
+  --neutral-500: #7f6f66;
+  --neutral-700: #4f403a;
+  --neutral-800: #3b2d27;
+  --brand-600: #cf3f25;
+  --brand-700: #a8301b;
+  --shadow-color: #3b2214;
+  --kakao-bg: #fee500;
+  --kakao-ink: #191600;
+  --naver-bg: #03a94d;
+  --apple-bg: #111111;
+  --on-strong: #ffffff;
+  --font-body: "Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI", "Malgun Gothic", "Noto Sans KR", sans-serif;
+  --font-display: "Jua", var(--font-body);
+  --radius-control: 16px;
+
+  font-family: var(--font-body);
+  color: var(--neutral-800);
+  background: var(--neutral-50);
   font-synthesis: none;
   -webkit-font-smoothing: antialiased;
 }
@@ -16,7 +35,7 @@ body {
   margin: 0;
   padding: 24px;
   place-items: center;
-  background: radial-gradient(ellipse at 20% 0, #fff8eb, transparent 65%), #f5e8d7;
+  background: var(--neutral-150);
 }
 
 button {
@@ -24,7 +43,7 @@ button {
 }
 
 button:focus-visible {
-  outline: 3px solid #d45330;
+  outline: 3px solid var(--brand-600);
   outline-offset: 4px;
 }
 
@@ -40,70 +59,79 @@ button:focus-visible {
   white-space: nowrap;
 }
 
+#root {
+  display: grid;
+  width: 100%;
+  place-items: center;
+}
+
+/* 휴대폰 화면 비율의 카드: 위에 로고·캐릭터, 아래에 로그인 버튼 */
 .login-card {
+  display: flex;
   width: 100%;
   max-width: 390px;
+  min-height: min(844px, calc(100dvh - 48px));
+  flex-direction: column;
   overflow: hidden;
-  border: 1px solid #e8d5ba;
-  border-radius: 28px;
-  background: #fff8ec;
-  box-shadow: 0 18px 70px #70401e12;
+  border-radius: 44px;
+  background: var(--neutral-50);
+  box-shadow: 0 1px 0 var(--neutral-150), 0 24px 48px color-mix(in srgb, var(--shadow-color) 14%, transparent);
 }
 
 .login-hero {
-  position: relative;
-  width: 100%;
-  overflow: hidden;
-  background: #fff8ec;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 72px 24px 16px;
 }
 
-.hero-art {
+.brand-logo {
   display: block;
-  width: 100%;
+  width: 220px;
   height: auto;
-  aspect-ratio: 142 / 153;
-  overflow: hidden;
-}
-
-.login-hero::after {
-  position: absolute;
-  inset: auto 0 0;
-  height: 20px;
-  background: linear-gradient(transparent, #fff8ec);
-  content: "";
-  pointer-events: none;
-}
-
-.login-content {
-  padding: 0 26px;
-  text-align: center;
 }
 
 .tagline {
-  margin: 0 0 28px;
-  font-size: 14px;
-  font-weight: 750;
-  letter-spacing: -0.5px;
+  margin: 0;
+  color: var(--neutral-700);
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 400;
+}
+
+.hero-mascot {
+  display: block;
+  width: 200px;
+  height: auto;
+  margin-top: 24px;
+}
+
+.login-content {
+  padding: 0 24px;
 }
 
 .social-buttons {
   display: grid;
-  gap: 11px;
+  gap: 10px;
 }
 
 .social-button {
   position: relative;
   display: flex;
-  min-height: 49px;
-  padding: 12px 43px;
+  width: 100%;
+  min-height: 54px;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   border: 0;
-  border-radius: 25px;
+  border-radius: var(--radius-control);
+  padding: 0 20px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 700;
-  letter-spacing: -0.3px;
   transition: filter 0.15s, transform 0.15s;
 }
 
@@ -116,33 +144,95 @@ button:focus-visible {
 }
 
 .provider-icon {
-  position: absolute;
-  left: 18px;
-  width: 21px;
-  height: 21px;
-}
-
-.naver-icon {
-  font-size: 23px;
-  font-weight: 950;
-  line-height: 21px;
-  letter-spacing: -2px;
-}
-
-.naver {
-  color: white;
-  background: #03c75a;
+  width: 24px;
+  height: 24px;
+  flex: none;
 }
 
 .kakao {
-  color: #231b16;
-  background: #fee500;
+  color: var(--kakao-ink);
+  background: var(--kakao-bg);
+}
+
+.naver {
+  color: var(--on-strong);
+  background: var(--naver-bg);
 }
 
 .apple {
-  border: 1px solid #ddd9d2;
-  color: #252525;
-  background: #fff;
+  color: var(--on-strong);
+  background: var(--apple-bg);
+}
+
+/* 준비 중인 로그인은 흐리게 두고, 누르면 안내만 띄웁니다. */
+.social-button.is-unavailable {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.social-button.is-unavailable:hover {
+  filter: none;
+}
+
+.social-button.is-unavailable:active {
+  transform: none;
+}
+
+.coming-soon {
+  display: inline-flex;
+  height: 22px;
+  align-items: center;
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--on-strong) 22%, transparent);
+  padding: 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.account-footer {
+  padding: 16px 24px 48px;
+  text-align: center;
+}
+
+.account-footer p {
+  margin: 0;
+  color: var(--neutral-500);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+@media (max-width: 480px) {
+  body {
+    display: block;
+    padding: 0;
+    background: var(--neutral-50);
+  }
+
+  .login-card {
+    max-width: none;
+    min-height: 100dvh;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .login-hero {
+    padding-top: max(56px, calc(env(safe-area-inset-top) + 40px));
+  }
+
+  .account-footer {
+    padding-bottom: max(32px, calc(env(safe-area-inset-bottom) + 16px));
+  }
+}
+
+@media (max-height: 700px) {
+  .login-hero {
+    padding-top: 40px;
+  }
+
+  .hero-mascot {
+    width: 150px;
+    margin-top: 8px;
+  }
 }
 
 .global-notice {
@@ -244,88 +334,3 @@ button:focus-visible {
   to { opacity: 1; transform: translate(-50%, 0) scale(1); }
 }
 
-.account-footer {
-  padding: 23px 20px 26px;
-  text-align: center;
-}
-
-.shared-account {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  color: #a18d7a;
-  font-size: 10px;
-}
-
-.shared-account svg {
-  width: 13px;
-  height: 13px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.5;
-}
-
-.account-footer p {
-  margin: 7px 0 0;
-  color: #b99a7d;
-  font-size: 10px;
-  letter-spacing: 1px;
-}
-
-.account-footer p span {
-  padding: 0 6px;
-  color: #dcc5ae;
-}
-
-@media (max-width: 480px) {
-  body {
-    display: block;
-    padding: 0;
-    background: #fff8ec;
-  }
-
-  .login-card {
-    max-width: none;
-    min-height: 100dvh;
-    border: 0;
-    border-radius: 0;
-    box-shadow: none;
-  }
-
-  .login-hero {
-    padding-top: env(safe-area-inset-top);
-  }
-
-  .account-footer {
-    padding-bottom: max(24px, env(safe-area-inset-bottom));
-  }
-}
-
-@media (min-width: 481px) and (max-height: 800px) {
-  body {
-    padding: 12px;
-  }
-
-  .login-card {
-    max-width: 340px;
-  }
-
-  .tagline {
-    margin-bottom: 21px;
-  }
-
-  .social-button {
-    min-height: 44px;
-  }
-
-  .account-footer {
-    padding: 18px;
-  }
-}
-
-#root {
-  display: grid;
-  width: 100%;
-  place-items: center;
-}

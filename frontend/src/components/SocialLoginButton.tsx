@@ -8,8 +8,14 @@ const providerNames: Record<SocialProvider, string> = {
 
 const kakaoIconPath =
   'M12 4C6.5 4 2 7.3 2 11.3c0 2.6 1.9 4.8 4.7 6.1l-.9 3.1c-.1.3.2.5.4.3l3.7-2.4c.7.1 1.4.2 2.1.2 5.5 0 10-3.3 10-7.3S17.5 4 12 4Z';
+const naverIconPath = 'M5 5h4.6l4.8 7V5H19v14h-4.6l-4.8-7v7H5z';
 const appleIconPath =
   'M16.6 3.2c-.7.9-1.8 1.5-2.9 1.4-.2-1.1.4-2.3 1.1-3 .8-.8 1.9-1.4 3-1.5.1 1.1-.4 2.3-1.2 3.1ZM20.8 17c-.5 1.2-.8 1.8-1.5 2.8-.9 1.2-2.1 2.7-3.5 2.7-1.2 0-1.6-.8-3.3-.8s-2.2.8-3.3.8c-1.4.1-2.5-1.3-3.4-2.6C3.3 16.4 2.7 11.9 4.2 9.5c1-1.7 2.6-2.7 4.2-2.7 1.3 0 2.2.8 3.3.8s1.8-.8 3.3-.8c1.3 0 2.7.7 3.7 1.9-3.3 1.8-2.8 6.5.1 8.3Z';
+const iconPaths: Record<SocialProvider, string> = {
+  kakao: kakaoIconPath,
+  naver: naverIconPath,
+  apple: appleIconPath,
+};
 
 interface SocialLoginButtonProps {
   provider: SocialProvider;
@@ -18,6 +24,7 @@ interface SocialLoginButtonProps {
 
 export default function SocialLoginButton({ provider, onUnavailable }: SocialLoginButtonProps) {
   const providerName = providerNames[provider];
+  const unavailable = provider !== 'kakao';
 
   // 현재는 Kakao만 연동했으며 네이버·Apple은 준비 중 안내를 표시합니다.
   function handleClick() {
@@ -31,17 +38,17 @@ export default function SocialLoginButton({ provider, onUnavailable }: SocialLog
   }
 
   return (
-    <button className={`social-button ${provider}`} type="button" onClick={handleClick}>
-      {provider === 'naver' ? (
-        <span className="provider-icon naver-icon" aria-hidden="true">
-          N
-        </span>
-      ) : (
-        <svg className="provider-icon" viewBox="0 0 24 24" aria-hidden="true">
-          <path fill="currentColor" d={provider === 'kakao' ? kakaoIconPath : appleIconPath} />
-        </svg>
-      )}
+    <button
+      className={`social-button ${provider}${unavailable ? ' is-unavailable' : ''}`}
+      type="button"
+      aria-disabled={unavailable || undefined}
+      onClick={handleClick}
+    >
+      <svg className="provider-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path fill="currentColor" d={iconPaths[provider]} />
+      </svg>
       <span>{providerName}로 시작하기</span>
+      {unavailable && <span className="coming-soon">준비 중</span>}
     </button>
   );
 }

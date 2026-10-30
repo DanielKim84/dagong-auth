@@ -5,7 +5,8 @@ import AccountFooter from '../components/AccountFooter';
 import NoticeToast, { type NoticeKind } from '../components/NoticeToast';
 
 type Notice = { kind: NoticeKind; title: string; message: string };
-const socialProviders: SocialProvider[] = ['naver', 'kakao', 'apple'];
+// 연동된 카카오를 맨 위에 두고, 준비 중인 네이버·Apple은 아래에 비활성으로 보여줍니다.
+const socialProviders: SocialProvider[] = ['kakao', 'naver', 'apple'];
 
 function initialNotice(): Notice | null {
   const url = new URL(window.location.href);
@@ -39,10 +40,9 @@ export default function LoginPage() {
   }, []);
 
   return (
-    <main className="login-card" aria-label="다공 계정 로그인">
+    <main className="login-card" aria-label="맛다공 로그인">
       <LoginHero />
       <section className="login-content" aria-label="소셜 계정 로그인">
-        <p className="tagline">맛있는 걸 함께하는 공간</p>
         <div className="social-buttons">
           {socialProviders.map((provider) => (
             <SocialLoginButton
