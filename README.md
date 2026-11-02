@@ -4,6 +4,10 @@
 
 계정과 OAuth 인가 정보는 JDBC로 읽고 저장하며, DB 구조와 칼럼 설명은 Flyway SQL에서 관리합니다.
 
+## 작업 규칙
+
+코딩 스타일과 서식 도구는 맛다공 저장소의 [코딩 스타일](https://github.com/DanielKim84/matdagong/blob/main/docs/coding-style.md)을 따릅니다. AI 도구 지침은 [AGENTS.md](AGENTS.md)에 있습니다.
+
 ## 구조
 
 ```text
@@ -14,7 +18,8 @@ dagong-auth/
 │     ├─ main/
 │     │  ├─ java/com/dagong/auth/
 │     │  │  ├─ account/     공통 계정·소셜 연결·서비스 가입·계정 상태 확인
-│     │  │  └─ security/    인증 설정, 토큰 발급 규칙, 로그인·세션 컨트롤러
+│     │  │  ├─ security/    보안 필터 체인(SecurityConfig), 클라이언트 등록·토큰 클레임(ClientRegistrationConfig), 서명 키(SigningKeyConfig), 로그인·세션 컨트롤러
+│     │  │  └─ web/         API 오류를 한국어 ProblemDetail로 바꾸는 처리기
 │     │  └─ resources/
 │     │     ├─ application.yml
 │     │     └─ db/migration/
@@ -24,7 +29,7 @@ dagong-auth/
 │  │  ├─ main.tsx       React 시작
 │  │  ├─ App.tsx
 │  │  ├─ pages/LoginPage.tsx
-│  │  ├─ components/    LoginHero, SocialLoginButton, AccountFooter, NoticeToast
+│  │  ├─ components/    LoginHero, SocialLoginButton, AccountFooter, AuthToast
 │  │  └─ styles/login.css
 │  ├─ public/assets/   로그인 화면 이미지
 │  └─ package.json
@@ -38,6 +43,8 @@ dagong-auth/
 frontend/index.html은 React 진입 HTML이며 화면 코드는 LoginPage.tsx에 있습니다. Kakao Developers에 등록하는 앱 아이콘은 `assets/kakao-developers-app-icon.png`에 보관하며, 웹 화면의 정적 이미지와 분리해 번들에 포함하지 않습니다.
 
 ## 처음 실행
+
+> 회사·집 등 여러 PC에서 맛다공과 함께 개발할 때는 이 절 대신 **[개발 환경 설정 통합 안내](https://github.com/DanielKim84/matdagong/blob/main/docs/home-development-setup.md)** (`C:\workspace\dagong-matdagong\docs\home-development-setup.md`)를 따릅니다. 아래는 이 저장소만 단독으로 띄울 때의 참고입니다.
 
 1. IntelliJ에서 루트 build.gradle을 다시 불러옵니다. Java SDK는 21입니다.
 2. Node.js 24.22.1 이상(24 LTS 계열)을 설치하고 frontend 폴더에서 npm ci를 실행합니다. 사용할 버전은 `frontend/.nvmrc`에 기록합니다.
@@ -85,6 +92,7 @@ Dockerfile도 이 JAR를 사용합니다. 로컬 화면 개발에는 Vite 서버
 - client 설정은 `application.yml`의 `dagong.auth.matdagong-client-id` / `dagong.auth.matdagong-redirect-uri`로 변경 가능합니다. 설정한 redirect URI와 access token 수명은 서버 시작 시 개발용 client 항목에 반영됩니다.
 - access token 수명 기본값은 30분(`PT30M`)입니다. 브라우저 공개 클라이언트에는 refresh token을 발급하지 않으므로, 개발 PC에서만 `.env`의 `AUTH_ACCESS_TOKEN_TTL`(ISO-8601, 예: `PT8H`)로 늘립니다.
 - access token에는 client_id를 audience로, `account_roles`의 활성 권한(ADMIN, SUPER_TASTER)을 `roles` 클레임으로 넣습니다.
+- 맛다공 가입 API는 RS256 서명·issuer·audience(맛다공 client_id)를 JwtDecoder에서 검증합니다. audience가 맞지 않거나 없는 토큰은 401입니다. 오류 응답은 ProblemDetail이며 `detail`에 한국어 문구를 담습니다.
 - 차단(BLOCKED)·탈퇴 처리 중(DELETION_PENDING)·탈퇴(DELETED) 계정은 Kakao 로그인, SSO 세션으로 받는 인가 코드, 토큰 발급, 맛다공 가입 API(`/api/v1/matdagong/membership`)에서 모두 거부합니다. 이미 발급된 access token은 만료 전까지 서명상 유효하므로, 즉시 차단이 필요한 API는 맛다공 가입 API처럼 계정 상태를 따로 확인합니다.
 - 클라이언트·인가·동의 저장소는 PostgreSQL을 사용합니다. 개발용 RSA 서명 키는 사용자 홈의 PKCS12 파일에서 읽으므로 재시작 뒤에도 같은 키로 토큰을 검증할 수 있습니다.
 - 운영 배포에서는 `AUTH_KEYSTORE_PATH`와 `AUTH_KEYSTORE_PASSWORD`를 운영 비밀 관리 체계에 맞게 설정해야 합니다.
@@ -95,11 +103,11 @@ Dockerfile도 이 JAR를 사용합니다. 로컬 화면 개발에는 Vite 서버
 
 ## 여러 PC에서 공유 개발 DB 사용
 
-집 컴퓨터에서 이어서 설정할 때는 [집 컴퓨터 개발 환경 설정 안내](docs/home-development-setup.md)를 따라갑니다. 이 안내는 저장소와 함께 Git으로 받을 수 있으며, 회사 컴퓨터의 비밀 파일을 복사할 필요가 없습니다.
+다른 PC에서 이어서 설정할 때는 [개발 환경 설정 통합 안내](https://github.com/DanielKim84/matdagong/blob/main/docs/home-development-setup.md)를 따라갑니다. 회사 컴퓨터의 비밀 파일을 복사할 필요가 없습니다.
 
 Flyway는 Spring Boot에 연결한 데이터베이스 마이그레이션 도구입니다. Git은 SQL 파일을 보관하고, Flyway는 앱 시작 시 `backend/src/main/resources/db/migration`에서 아직 적용하지 않은 버전을 순서대로 실행합니다. 적용 기록은 `flyway_schema_history`에서 확인합니다. 이미 적용된 SQL은 수정하지 않고 새 버전 파일을 추가합니다.
 
-회사와 집에서 같은 테스트 데이터를 이어서 사용하도록 Neon 무료 프로젝트 `dagong`의 개발 데이터베이스를 연결했습니다. 프로젝트는 싱가포르 리전이고, DB는 `dagong_auth_dev`, 회사 PC의 앱 계정은 `dagong_auth_app`입니다. Spring Boot와 Flyway가 사용하는 직접 연결 주소는 다음과 같습니다. 각 PC의 루트 `.env`에 접속 정보를 설정하고, 실제 비밀번호는 Git에 올리지 않습니다.
+회사와 집에서 같은 테스트 데이터를 이어서 사용하도록 Neon 무료 프로젝트 `dagong`의 개발 데이터베이스를 연결했습니다. 프로젝트는 싱가포르 리전이고, DB는 `dagong_auth_dev`, 앱 계정은 모든 PC가 함께 쓰는 `dagong_auth_app`입니다. Spring Boot와 Flyway가 사용하는 직접 연결 주소는 다음과 같습니다. 각 PC의 루트 `.env`에 접속 정보를 설정하고, 실제 비밀번호는 Git에 올리지 않습니다.
 
 ```text
 DB_URL=jdbc:postgresql://<Neon 직접 연결 호스트>:5432/dagong_auth_dev?sslmode=require
@@ -107,7 +115,7 @@ DB_USERNAME=dagong_auth_app
 DB_PASSWORD=<Neon에서 받은 앱 계정 비밀번호>
 ```
 
-각 PC의 비밀 값은 해당 PC에서 직접 설정합니다. 회사 PC의 `.env`나 Neon 자격 증명 다운로드 파일을 Git에 추가하거나 채팅에 붙여 넣지 않습니다. 집 PC 전용 DB 계정 설정과 `.env` 작성 방법은 위 안내 문서를 참고합니다.
+각 PC의 비밀 값은 해당 PC에서 직접 설정합니다. 회사 PC의 `.env`나 Neon 자격 증명 다운로드 파일을 Git에 추가하거나 채팅에 붙여 넣지 않습니다. PC마다 DB 계정을 따로 만들지 않습니다(테이블 소유자가 달라지면 Flyway 마이그레이션이 실패). `.env` 작성 방법은 위 통합 안내를 참고합니다.
 
 기존 원격 DB에 연결하면 Flyway가 적용을 마친 버전은 건너뜁니다. 초기 스키마 재정의는 V2에 기록돼 있으며, 이후 정리는 데이터를 보존하는 별도 마이그레이션으로 적용합니다. Neon 연결 문자열은 TLS를 요구하며, 개발용 테스트 데이터만 저장합니다.
 

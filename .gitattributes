@@ -1,0 +1,15 @@
+# 어느 PC(Windows·macOS)에서 받아도 줄바꿈을 LF로 맞춥니다. Windows 배치 파일만 CRLF입니다.
+* text=auto eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.jar binary
+*.p12 binary
+*.woff binary
+*.woff2 binary
