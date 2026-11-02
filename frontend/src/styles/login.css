@@ -1,22 +1,34 @@
-/* 맛다공 앱(frontend/src/theme/themes/default.css)과 같은 색·반경 값을 씁니다. */
+/*
+ * 색·반경은 이 블록에서만 정의하고 아래 규칙은 var()만 씁니다.
+ * 이름과 값은 맛다공 기본 테마(dagong-matdagong/frontend/src/theme/themes/default.css)와 같게 맞춥니다.
+ * 맛다공 테마 값이 바뀌면 여기도 같은 이름의 값을 바꿉니다.
+ */
 :root {
-  --neutral-0: #ffffff;
+  --neutral-25: #fffcf8;
   --neutral-50: #fff8f1;
   --neutral-150: #f3e6db;
+  --neutral-200: #e9d9cc;
+  --neutral-400: #a99689;
   --neutral-500: #7f6f66;
   --neutral-700: #4f403a;
   --neutral-800: #3b2d27;
+  --brand-400: #eb7d5e;
+  --brand-500: #e05d3c;
   --brand-600: #cf3f25;
-  --brand-700: #a8301b;
+  --clay-800: #4b3328;
+  --green-400: #62ab74;
+  --green-500: #448f59;
   --shadow-color: #3b2214;
+  --on-strong: #ffffff;
+  /* 소셜 로그인 버튼 색은 각 제공자의 브랜드 지침을 따르므로 맛다공 테마에 없습니다. */
   --kakao-bg: #fee500;
   --kakao-ink: #191600;
   --naver-bg: #03a94d;
   --apple-bg: #111111;
-  --on-strong: #ffffff;
   --font-body: "Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI", "Malgun Gothic", "Noto Sans KR", sans-serif;
   --font-display: "Jua", var(--font-body);
   --radius-control: 16px;
+  --radius-pill: 999px;
 
   font-family: var(--font-body);
   color: var(--neutral-800);
@@ -47,7 +59,7 @@ button:focus-visible {
   outline-offset: 4px;
 }
 
-.sr-only {
+.visually-hidden {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -75,7 +87,9 @@ button:focus-visible {
   overflow: hidden;
   border-radius: 44px;
   background: var(--neutral-50);
-  box-shadow: 0 1px 0 var(--neutral-150), 0 24px 48px color-mix(in srgb, var(--shadow-color) 14%, transparent);
+  box-shadow:
+    0 1px 0 var(--neutral-150),
+    0 24px 48px color-mix(in srgb, var(--shadow-color) 14%, transparent);
 }
 
 .login-hero {
@@ -132,7 +146,9 @@ button:focus-visible {
   cursor: pointer;
   font-size: 16px;
   font-weight: 700;
-  transition: filter 0.15s, transform 0.15s;
+  transition:
+    filter 0.15s,
+    transform 0.15s;
 }
 
 .social-button:hover {
@@ -182,7 +198,7 @@ button:focus-visible {
   display: inline-flex;
   height: 22px;
   align-items: center;
-  border-radius: 11px;
+  border-radius: var(--radius-pill);
   background: color-mix(in srgb, var(--on-strong) 22%, transparent);
   padding: 0 8px;
   font-size: 12px;
@@ -235,7 +251,7 @@ button:focus-visible {
   }
 }
 
-.global-notice {
+.auth-toast {
   position: fixed;
   left: 50%;
   bottom: calc(20px + env(safe-area-inset-bottom));
@@ -246,62 +262,66 @@ button:focus-visible {
   align-items: center;
   gap: 12px;
   transform: translateX(-50%);
-  border: 1px solid #f0dfca;
+  border: 1px solid var(--neutral-200);
   border-radius: 18px;
-  background: linear-gradient(135deg, #fffefa, #fff8ed);
+  background: linear-gradient(135deg, var(--neutral-25), var(--neutral-50));
   padding: 12px 13px;
-  color: #4d3027;
+  color: var(--clay-800);
   text-align: left;
-  box-shadow: 0 12px 34px #5a301b24, 0 2px 7px #5a301b0d;
-  animation: notice-enter 240ms cubic-bezier(.2, .75, .25, 1);
+  box-shadow:
+    0 12px 34px color-mix(in srgb, var(--shadow-color) 14%, transparent),
+    0 2px 7px color-mix(in srgb, var(--shadow-color) 5%, transparent);
+  animation: auth-toast-enter 240ms cubic-bezier(0.2, 0.75, 0.25, 1);
 }
 
-.global-notice__icon {
+.auth-toast__icon {
   display: grid;
   width: 42px;
   height: 42px;
   flex: none;
   place-items: center;
   border-radius: 50%;
-  background: linear-gradient(145deg, #ff8050, #f04c3c);
-  color: #fff;
-  box-shadow: inset 0 1px 0 #ffffff66, 0 4px 9px #e14c352b;
+  background: linear-gradient(145deg, var(--brand-400), var(--brand-500));
+  color: var(--on-strong);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--on-strong) 40%, transparent),
+    0 4px 9px color-mix(in srgb, var(--brand-500) 17%, transparent);
 }
 
-.global-notice__icon svg {
+.auth-toast__icon svg {
   width: 21px;
   height: 21px;
 }
 
-.global-notice--success .global-notice__icon {
-  background: linear-gradient(145deg, #65b77a, #31935a);
+.auth-toast--success .auth-toast__icon {
+  background: linear-gradient(145deg, var(--green-400), var(--green-500));
 }
 
-.global-notice--error .global-notice__icon {
-  background: linear-gradient(145deg, #f17969, #d84a45);
+.auth-toast--error .auth-toast__icon {
+  background: linear-gradient(145deg, var(--brand-400), var(--brand-600));
 }
 
-.global-notice__copy {
+.auth-toast__copy {
   display: grid;
   min-width: 0;
   flex: 1;
   gap: 4px;
 }
 
-.global-notice__copy b {
+.auth-toast__copy b {
   font-size: 13px;
   font-weight: 750;
-  letter-spacing: -.25px;
+  letter-spacing: -0.25px;
 }
 
-.global-notice__copy span {
-  color: #8d776b;
+.auth-toast__copy span {
+  color: var(--neutral-500);
   font-size: 11px;
   line-height: 1.5;
   overflow-wrap: anywhere;
 }
 
-.global-notice__close {
+.auth-toast__close {
   display: grid;
   width: 30px;
   height: 30px;
@@ -309,28 +329,37 @@ button:focus-visible {
   place-items: center;
   border: 0;
   border-radius: 50%;
-  background: #f5eadc;
+  background: var(--neutral-150);
   padding: 6px;
-  color: #9d8576;
-  transition: background 120ms ease, color 120ms ease;
+  color: var(--neutral-400);
+  transition:
+    background 120ms ease,
+    color 120ms ease;
 }
 
-.global-notice__close svg {
+.auth-toast__close svg {
   width: 15px;
   height: 15px;
 }
 
-.global-notice__close:hover {
-  background: #ecddcb;
-  color: #5c3e31;
+.auth-toast__close:hover {
+  background: var(--neutral-200);
+  color: var(--neutral-700);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .global-notice { animation: none; }
+  .auth-toast {
+    animation: none;
+  }
 }
 
-@keyframes notice-enter {
-  from { opacity: 0; transform: translate(-50%, 12px) scale(.98); }
-  to { opacity: 1; transform: translate(-50%, 0) scale(1); }
+@keyframes auth-toast-enter {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
 }
-

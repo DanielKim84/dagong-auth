@@ -26,33 +26,35 @@ public class KakaoOAuth2UserService implements OAuth2UserService<OAuth2UserReque
     @Override
     public OAuth2User loadUser(OAuth2UserRequest request) {
         if (!"kakao".equals(request.getClientRegistration().getRegistrationId())) {
-            throw new OAuth2AuthenticationException(new OAuth2Error("unsupported_social_provider"));
+            throw new OAuth2AuthenticationException(
+                    new OAuth2Error("unsupported_social_provider", "지원하지 않는 소셜 로그인입니다.", null));
         }
 
         OAuth2User kakaoUser = delegate.loadUser(request);
         Map<String, Object> attributes = kakaoUser.getAttributes();
         String providerUserId = stringValue(attributes.get("id"));
         if (providerUserId == null || providerUserId.isBlank()) {
-            throw new OAuth2AuthenticationException(new OAuth2Error("kakao_user_id_missing"));
+            throw new OAuth2AuthenticationException(
+                    new OAuth2Error("kakao_user_id_missing", "카카오 회원번호를 받지 못했습니다.", null));
         }
 
         Map<String, Object> kakaoAccount = mapValue(attributes.get("kakao_account"));
         Map<String, Object> profile = mapValue(kakaoAccount.get("profile"));
         Map<String, Object> properties = mapValue(attributes.get("properties"));
-        String nickname = firstNonBlank(
-                stringValue(profile.get("nickname")),
-                stringValue(properties.get("nickname")));
+        String nickname = firstNonBlank(stringValue(profile.get("nickname")), stringValue(properties.get("nickname")));
 
-        SocialAccountService.AccountIdentity identity = socialAccountService.authenticateKakao(providerUserId, nickname);
+        SocialAccountService.AccountIdentity identity =
+                socialAccountService.authenticateKakao(providerUserId, nickname);
         if (identity.status() != AccountStatus.ACTIVE) {
-            throw new OAuth2AuthenticationException(new OAuth2Error("account_not_active"));
+            throw new OAuth2AuthenticationException(new OAuth2Error("account_not_active", "이용이 제한된 계정입니다.", null));
         }
 
         // Authorization DB에는 원본 Kakao attributes(숫자형 ID 등)를 저장하지 않고 공통 계정 ID만 둡니다.
         // 이 값들은 토큰 발급 뒤 필요하지 않으며, 저장된 인증 정보를 안전하게 복원할 수 있게 합니다.
         // 계정 UUID가 인증 주체 이름이 되어 토큰 sub와 계정 상태·권한 조회에 그대로 쓰입니다.
         // 서비스 권한은 토큰 발급 때 account_roles에서 읽으므로 로그인 주체에는 권한을 두지 않습니다.
-        Map<String, Object> accountAttributes = Map.of("dagong_account_id", identity.accountId().toString());
+        Map<String, Object> accountAttributes =
+                Map.of("dagong_account_id", identity.accountId().toString());
         return new DefaultOAuth2User(List.of(), accountAttributes, "dagong_account_id");
     }
 

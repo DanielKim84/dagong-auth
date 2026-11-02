@@ -3,64 +3,60 @@ package com.dagong.auth.security;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.dagong.auth.account.AccountRoleService;
+import com.dagong.auth.account.AccountStatus;
 import com.dagong.auth.account.ActiveAccountChecker;
-import io.zonky.test.db.postgres.embedded.EmbeddedPostgres;
+import com.dagong.auth.support.TestDatabase;
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
-import javax.sql.DataSource;
-import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
-import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 
 /** 실제 PostgreSQL에 Flyway 스키마를 적용하고, 차단·탈퇴 계정에 토큰이 발급되지 않는지 확인합니다. */
-class AccountStatusTokenTest {
+class AccountStatusTokenIntegrationTest {
     private static final UUID ACTIVE = UUID.fromString("11111111-1111-1111-1111-111111111111");
     private static final UUID BLOCKED = UUID.fromString("22222222-2222-2222-2222-222222222222");
     private static final UUID DELETED = UUID.fromString("33333333-3333-3333-3333-333333333333");
 
-    private static EmbeddedPostgres postgres;
-    private static DataSource dataSource;
-    private JdbcTemplate jdbc;
+    private static TestDatabase database;
     private ActiveAccountChecker checker;
     private OAuth2TokenCustomizer<JwtEncodingContext> customizer;
 
     @BeforeAll
     static void startDatabase() throws IOException {
-        postgres = EmbeddedPostgres.start();
-        dataSource = postgres.getPostgresDatabase();
-        Flyway.configure().dataSource(dataSource).locations("classpath:db/migration").load().migrate();
+        database = TestDatabase.start();
     }
 
     @AfterAll
     static void stopDatabase() throws IOException {
-        if (postgres != null) postgres.close();
+        if (database != null) database.close();
     }
 
     @BeforeEach
     void setUp() {
-        jdbc = new JdbcTemplate(dataSource);
-        jdbc.update("TRUNCATE accounts CASCADE");
-        insertAccount(ACTIVE, "ACTIVE");
-        insertAccount(BLOCKED, "BLOCKED");
-        insertAccount(DELETED, "DELETED");
-        jdbc.update("INSERT INTO account_roles (user_id, role_cd, role_st) VALUES (?, 'ADMIN', 'ACTIVE')", ACTIVE);
-        checker = new ActiveAccountChecker(jdbc);
-        customizer = new SecurityConfig().accessTokenCustomizer(jdbc, checker);
+        database.truncateAccounts();
+        database.insertAccount(ACTIVE, AccountStatus.ACTIVE);
+        database.insertAccount(BLOCKED, AccountStatus.BLOCKED);
+        database.insertAccount(DELETED, AccountStatus.DELETED);
+        database.jdbc()
+                .update("INSERT INTO account_roles (user_id, role_cd, role_st) VALUES (?, 'ADMIN', 'ACTIVE')", ACTIVE);
+        checker = new ActiveAccountChecker(database.jdbc());
+        customizer =
+                new ClientRegistrationConfig().accessTokenCustomizer(checker, new AccountRoleService(database.jdbc()));
     }
 
     @Test
@@ -80,7 +76,7 @@ class AccountStatusTokenTest {
 
         JwtClaimsSet claims = context.getClaims().build();
         assertThat(claims.getAudience()).containsExactly("matdagong-web-dev");
-        assertThat((List<String>) claims.getClaim("roles")).containsExactly("ADMIN");
+        assertThat(claims.<List<String>>getClaim("roles")).containsExactly("ADMIN");
     }
 
     @Test
@@ -91,15 +87,7 @@ class AccountStatusTokenTest {
                 .isInstanceOf(OAuth2AuthenticationException.class);
     }
 
-    private void insertAccount(UUID userId, String status) {
-        // 탈퇴 완료 계정은 스키마 제약상 탈퇴 시각이 있어야 합니다.
-        jdbc.update("""
-                INSERT INTO accounts (user_id, user_nm, user_st, del_dt)
-                VALUES (?, ?, ?, CASE WHEN ? = 'DELETED' THEN now() END)
-                """, userId, "맛객", status, status);
-    }
-
-    private static JwtEncodingContext accessTokenContext(UUID userId) {
+    private static JwtEncodingContext accessTokenContext(UUID accountId) {
         RegisteredClient client = RegisteredClient.withId("client")
                 .clientId("matdagong-web-dev")
                 .clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
@@ -108,7 +96,7 @@ class AccountStatusTokenTest {
                 .build();
         return JwtEncodingContext.with(JwsHeader.with(SignatureAlgorithm.RS256), JwtClaimsSet.builder())
                 .registeredClient(client)
-                .principal(UsernamePasswordAuthenticationToken.authenticated(userId.toString(), null, List.of()))
+                .principal(UsernamePasswordAuthenticationToken.authenticated(accountId.toString(), null, List.of()))
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                 .tokenType(OAuth2TokenType.ACCESS_TOKEN)
                 .build();
