@@ -25,17 +25,16 @@ export default function SocialLoginButton({
   onUnavailable: (providerName: string) => void;
 }) {
   const providerName = PROVIDER_NAMES[provider];
-  const isUnavailable = provider !== "kakao";
+  const isUnavailable = provider === "apple";
 
-  // 현재는 Kakao만 연동했으며 네이버·Apple은 준비 중 안내를 표시합니다.
+  // 카카오·네이버는 연동했고, Apple은 앱 출시 뒤 붙일 예정이라 준비 중 안내를 표시합니다.
   function startLogin() {
-    if (provider === "kakao") {
-      // Kakao 인증은 백엔드에서 시작합니다. 개발 중에는 Vite가 5840으로 전달하고, 배포에서는 같은 서버가 처리합니다.
-      window.location.assign("/oauth2/authorization/kakao");
+    if (isUnavailable) {
+      onUnavailable(providerName);
       return;
     }
-
-    onUnavailable(providerName);
+    // 소셜 인증은 백엔드에서 시작합니다. 개발 중에는 Vite가 5840으로 전달하고, 배포에서는 같은 서버가 처리합니다.
+    window.location.assign(`/oauth2/authorization/${provider}`);
   }
 
   return (

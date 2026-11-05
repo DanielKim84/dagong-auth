@@ -72,7 +72,7 @@ processResources가 React 빌드를 자동 실행하고 결과를 backend/build/
 ## 화면 개발
 
 프로젝트 루트 또는 frontend에서 npm run dev 실행 후 http://localhost:4840/login 접속합니다. React 화면 수정은 즉시 반영됩니다.
-화면은 4840, 인증 API 서버는 5840에서 실행합니다. Vite가 OAuth 요청과 Kakao callback 경로를 인증 API 서버로 전달합니다. Kakao Developers의 callback 주소는 http://localhost:4840/login/oauth2/code/kakao 입니다.
+화면은 4840, 인증 API 서버는 5840에서 실행합니다. Vite가 OAuth 요청과 카카오·네이버 callback 경로를 인증 API 서버로 전달합니다. Kakao Developers의 callback 주소는 http://localhost:4840/login/oauth2/code/kakao 입니다.
 
 ## 배포
 
@@ -83,10 +83,17 @@ Dockerfile도 이 JAR를 사용합니다. 로컬 화면 개발에는 Vite 서버
 
 ## 현재 기능 범위
 
-- React 로그인 화면: 시안의 로고·배경·캐릭터가 이어지는 상단, 네이버·카카오·Apple 버튼.
-- Kakao OAuth2 로그인은 공통 계정을 생성하거나 기존 계정에 연결합니다. REST API 키와 Client Secret은 루트 `.env`에 설정하고, Kakao Developers에 위 Redirect URI를 등록해야 실제 인증할 수 있습니다.
-- 네이버·Apple 버튼은 준비 중 안내를 표시합니다. 맛다공은 `/auth/callback`에서 인가 코드를 토큰으로 교환하고 서비스 가입 또는 홈으로 이어집니다.
+- React 로그인 화면: 시안의 로고·배경·캐릭터가 이어지는 상단, 카카오·네이버·Apple 버튼.
+- 카카오·네이버 OAuth2 로그인은 공통 계정을 생성하거나 기존 계정에 연결합니다(`SocialOAuth2UserService`, `social_identities.provider_cd`는 `KAKAO`·`NAVER`). 같은 사람이라도 제공자가 다르면 다른 계정이고, 이메일로 계정을 합치지 않습니다. 키는 루트 `.env`(`KAKAO_*`, `NAVER_*`)에 설정하고, 각 Developers 콘솔에 Redirect URI `http://localhost:4840/login/oauth2/code/kakao`·`.../naver`를 등록해야 실제 인증할 수 있습니다.
+- 맛다공 가입 상태 API(`GET /api/v1/matdagong/membership`)는 연결된 소셜 제공자 코드를 `loginProviders`로 함께 돌려줍니다(설정의 연결된 계정 표시).
+- Apple 버튼은 앱 출시 뒤 붙일 예정이라 준비 중 안내를 표시합니다. 맛다공은 `/auth/callback`에서 인가 코드를 토큰으로 교환하고 서비스 가입 또는 홈으로 이어집니다.
 - /login?error, /login?logout 안내를 React 상태로 표시합니다.
+- **한 기기 로그인(맛다공)**: 계정마다 휴대폰 1대·PC 1대까지 맛다공에 로그인할 수 있습니다(`device` 패키지). 기기는 인증 서버가 심는 쿠키 `dagong_device`로, 종류는 User-Agent로 나눕니다(태블릿은 휴대폰).
+  - `SingleDeviceLoginFilter`가 맛다공 인가 요청(`/oauth2/authorize?client_id=맛다공`)마다 같은 종류의 다른 기기에 로그인이 남았는지 봅니다. 남았으면 로그인 화면 `?device-confirm=MOBILE|PC`로 보내 "다른 휴대폰에서 로그인되어 있어요"를 묻고, 계속(`POST /auth/device/confirm`)하면 그 기기의 맛다공 인가 기록(`oauth2_authorization`)을 지우며, 취소(`POST /auth/device/cancel`)하면 SSO 세션을 끊고 처음 로그인 화면으로 돌아갑니다.
+  - 어느 인가 기록이 어느 기기의 것인지는 `matdagong_device_logins`에 남깁니다(`DeviceTrackingAuthorizationService`가 인가 코드를 저장할 때). 로그인 중인지는 그 인가 기록의 access token이 만료 전인지로 봅니다.
+  - 로그아웃된 기기는 `matdagong_device_signouts`에 남고, 그 기기가 로그인 화면을 열면 `GET /auth/device/notice`로 "다른 기기에서 로그인되어 이 기기는 로그아웃됐어요"를 한 번 보여 줍니다.
+  - 인증 서버 API(맛다공 가입 상태 등)는 인가 기록이 지워진 토큰을 401로 거부합니다(`ActiveAuthorizationValidator`). 맛다공 커뮤니티·장소 API는 서명만 보므로, 맛다공 게이트웨이가 API 요청을 넘기기 전에 `GET /api/v1/matdagong/session`(DB에 쓰지 않는 확인 주소, 계정 차단도 함께 확인)으로 로그인 중인지 묻고 끝난 토큰은 401로 막습니다. 게이트웨이는 답을 토큰별로 30초 기억하므로 다른 기기 로그인 뒤 최대 30초쯤은 이전 기기 요청이 통과할 수 있습니다. 맛다공 화면은 앱으로 돌아올 때 가입 상태를 한 번 물어 마지막 접속 시각을 남기고, 로그인이 끝났으면 바로 다시 로그인합니다.
+  - 사용자가 직접 로그아웃하면(`POST /auth/session/clear?endDeviceLogin=true`) 이 기기의 맛다공 인가 기록도 지워, 다른 기기에서 로그인할 때 묻지 않습니다. 여다공 등 다른 client의 로그인에는 영향이 없습니다.
 - 계정·소셜 연결·서비스 이용 현황·관리자 조치·권한·OAuth 인가/동의 저장소는 Flyway 스크립트로 관리합니다.
 - 개발 OAuth client_id: matdagong-web-dev, Authorization Code + PKCE, redirect_uri 기본값: http://localhost:4845/auth/callback.
 - client 설정은 `application.yml`의 `dagong.auth.matdagong-client-id` / `dagong.auth.matdagong-redirect-uri`로 변경 가능합니다. 설정한 redirect URI와 access token 수명은 서버 시작 시 개발용 client 항목에 반영됩니다.
@@ -94,6 +101,7 @@ Dockerfile도 이 JAR를 사용합니다. 로컬 화면 개발에는 Vite 서버
 - access token에는 client_id를 audience로, `account_roles`의 활성 권한(ADMIN, SUPER_TASTER)을 `roles` 클레임으로 넣습니다.
 - 맛다공 가입 API는 RS256 서명·issuer·audience(맛다공 client_id)를 JwtDecoder에서 검증합니다. audience가 맞지 않거나 없는 토큰은 401입니다. 오류 응답은 ProblemDetail이며 `detail`에 한국어 문구를 담습니다.
 - 차단(BLOCKED)·탈퇴 처리 중(DELETION_PENDING)·탈퇴(DELETED) 계정은 Kakao 로그인, SSO 세션으로 받는 인가 코드, 토큰 발급, 맛다공 가입 API(`/api/v1/matdagong/membership`)에서 모두 거부합니다. 이미 발급된 access token은 만료 전까지 서명상 유효하므로, 즉시 차단이 필요한 API는 맛다공 가입 API처럼 계정 상태를 따로 확인합니다.
+- 맛다공 가입 취소(`DELETE /api/v1/matdagong/membership`, 맛다공 탈퇴의 마지막 단계)는 `account_services`의 맛다공 행을 `WITHDRAWN`으로 바꾸고, 이 계정이 맛다공 client로 받은 로그인 기록(`oauth2_authorization`)을 지웁니다. 공통 계정·카카오 연결·다른 서비스의 로그인 기록·동의 기록은 남기며, 다시 로그인하면 맛다공 가입부터 다시 합니다.
 - 클라이언트·인가·동의 저장소는 PostgreSQL을 사용합니다. 개발용 RSA 서명 키는 사용자 홈의 PKCS12 파일에서 읽으므로 재시작 뒤에도 같은 키로 토큰을 검증할 수 있습니다.
 - 운영 배포에서는 `AUTH_KEYSTORE_PATH`와 `AUTH_KEYSTORE_PASSWORD`를 운영 비밀 관리 체계에 맞게 설정해야 합니다.
 

@@ -10,9 +10,11 @@ export default defineConfig(({ command }) => ({
     port: 4840,
     strictPort: true,
     proxy: {
-      // Kakao 인증 시작(/oauth2/authorization/kakao)과 Kakao callback(/login/oauth2/code/kakao)을 전달합니다.
+      // 소셜 인증 시작(/oauth2/authorization/kakao·naver)과 callback(/login/oauth2/code/kakao·naver)을 전달합니다.
       "/oauth2": "http://localhost:5840",
       "/login/oauth2": "http://localhost:5840",
+      // 한 기기 로그인 확인(계속·취소)과 다른 기기 로그인으로 로그아웃됐다는 안내 확인입니다.
+      "/auth/device": "http://localhost:5840",
     },
   },
 }));

@@ -7,7 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 계정이 지금 서비스를 이용할 수 있는 상태인지 확인합니다.
- * Kakao 로그인 시점뿐 아니라 SSO 세션으로 인가 코드나 토큰을 다시 받을 때도 같은 기준을 적용합니다.
+ * 소셜 로그인 시점뿐 아니라 SSO 세션으로 인가 코드나 토큰을 다시 받을 때도 같은 기준을 적용합니다.
  */
 @Component
 @Transactional(readOnly = true)

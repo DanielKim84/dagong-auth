@@ -2,6 +2,8 @@ package com.dagong.auth.security;
 
 import com.dagong.auth.account.AccountRoleService;
 import com.dagong.auth.account.ActiveAccountChecker;
+import com.dagong.auth.device.DeviceLoginService;
+import com.dagong.auth.device.DeviceTrackingAuthorizationService;
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
@@ -113,11 +115,21 @@ public class ClientRegistrationConfig {
         };
     }
 
-    /** 인가 코드와 토큰을 DB에 저장해 서버를 재시작해도 활성 인가 상태를 유지합니다. */
+    /**
+     * 인가 코드와 토큰을 DB에 저장해 서버를 재시작해도 활성 인가 상태를 유지합니다.
+     * 맛다공 인가 코드를 저장할 때는 어느 기기의 로그인인지 함께 남깁니다(한 기기 로그인).
+     */
     @Bean
     OAuth2AuthorizationService authorizationService(
-            JdbcTemplate jdbc, RegisteredClientRepository registeredClientRepository) {
-        return new JdbcOAuth2AuthorizationService(jdbc, registeredClientRepository);
+            JdbcTemplate jdbc,
+            RegisteredClientRepository registeredClientRepository,
+            DeviceLoginService deviceLogins,
+            @Value("${dagong.auth.matdagong-client-id}") String clientId) {
+        return new DeviceTrackingAuthorizationService(
+                new JdbcOAuth2AuthorizationService(jdbc, registeredClientRepository),
+                registeredClientRepository,
+                deviceLogins,
+                clientId);
     }
 
     /** 사용자가 클라이언트에 허용한 scope를 DB에 저장합니다. */

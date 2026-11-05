@@ -205,6 +205,73 @@ button:focus-visible {
   font-weight: 700;
 }
 
+/* 다른 기기 로그인으로 로그아웃됐다는 한 줄 안내 */
+.device-signed-out {
+  margin: 0 0 12px;
+  border-radius: var(--radius-control);
+  background: var(--neutral-25);
+  padding: 10px 14px;
+  color: var(--neutral-700);
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
+  word-break: keep-all;
+}
+
+/* 한 기기 로그인 확인(DeviceConfirm) */
+.device-confirm {
+  text-align: center;
+  word-break: keep-all;
+}
+
+.device-confirm h1 {
+  margin: 0 0 8px;
+  color: var(--neutral-800);
+  font-family: var(--font-display);
+  font-size: 21px;
+  font-weight: 400;
+}
+
+.device-confirm p {
+  margin: 0 0 20px;
+  color: var(--neutral-500);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.device-confirm .device-confirm__error {
+  color: var(--brand-600);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.device-confirm__actions {
+  display: grid;
+  gap: 10px;
+}
+
+.device-confirm__button {
+  min-height: 54px;
+  border: 1px solid var(--neutral-200);
+  border-radius: var(--radius-control);
+  background: var(--neutral-25);
+  cursor: pointer;
+  color: var(--neutral-700);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.device-confirm__button.is-primary {
+  border-color: var(--brand-500);
+  background: var(--brand-500);
+  color: var(--on-strong);
+}
+
+.device-confirm__button:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
 .account-footer {
   padding: 16px 24px 48px;
   text-align: center;

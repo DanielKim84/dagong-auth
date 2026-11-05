@@ -1,12 +1,15 @@
 package com.dagong.auth.security;
 
 import com.dagong.auth.account.ActiveAccountChecker;
+import com.dagong.auth.device.DeviceLoginService;
+import com.dagong.auth.device.SingleDeviceLoginFilter;
 import java.net.URI;
 import java.util.function.Consumer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -28,6 +31,7 @@ import org.springframework.security.oauth2.server.authorization.authentication.O
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import org.springframework.security.web.context.SecurityContextHolderFilter;
 
 /**
  * 보안 필터 체인을 설정합니다: 맛다공 API(bearer token), OAuth2·OIDC 인가 서버 엔드포인트, 로그인 화면.
@@ -37,17 +41,21 @@ import org.springframework.security.web.authentication.LoginUrlAuthenticationEnt
 public class SecurityConfig {
     /**
      * 이 서버가 발급한 맛다공 API bearer token을 issuer의 JWKS 공개키(RS256), issuer, audience로 검증합니다.
-     * audience에 맛다공 client_id가 없으면 컨트롤러에 닿기 전에 401로 거부합니다.
+     * audience에 맛다공 client_id가 없거나, 다른 기기 로그인·로그아웃·탈퇴로 인가 기록이 지워진 토큰이면
+     * 컨트롤러에 닿기 전에 401로 거부합니다.
      */
     @Bean
     JwtDecoder jwtDecoder(
             @Value("${dagong.auth.issuer}") String issuer,
-            @Value("${dagong.auth.matdagong-client-id}") String clientId) {
+            @Value("${dagong.auth.matdagong-client-id}") String clientId,
+            JdbcTemplate jdbc) {
         NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(issuer + "/oauth2/jwks")
                 .jwsAlgorithm(SignatureAlgorithm.RS256)
                 .build();
         decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(
-                JwtValidators.createDefaultWithIssuer(issuer), new AudienceValidator(clientId)));
+                JwtValidators.createDefaultWithIssuer(issuer),
+                new AudienceValidator(clientId),
+                new ActiveAuthorizationValidator(jdbc)));
         return decoder;
     }
 
@@ -63,12 +71,17 @@ public class SecurityConfig {
         return http.build();
     }
 
-    /** OAuth2·OIDC 엔드포인트를 보호하고 미인증 요청을 공통 로그인 화면으로 보냅니다. */
+    /**
+     * OAuth2·OIDC 엔드포인트를 보호하고 미인증 요청을 공통 로그인 화면으로 보냅니다.
+     * 맛다공 인가 요청에는 한 기기 로그인 필터를 인가 엔드포인트보다 앞에 둡니다.
+     */
     @Bean
     @Order(1)
     SecurityFilterChain authorizationServerSecurityFilterChain(
             HttpSecurity http,
             ActiveAccountChecker activeAccountChecker,
+            DeviceLoginService deviceLogins,
+            @Value("${dagong.auth.matdagong-client-id}") String clientId,
             @Value("${dagong.auth.login-page-url}") String loginPageUrl)
             throws Exception {
         OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
@@ -87,6 +100,10 @@ public class SecurityConfig {
                                     }
                                 }))))
                 .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
+                // 로그인 사용자를 읽은 직후, 인가 코드를 발급하는 엔드포인트 필터보다 먼저 실행됩니다.
+                .addFilterAfter(
+                        new SingleDeviceLoginFilter(deviceLogins, clientId, loginPageUrl),
+                        SecurityContextHolderFilter.class)
                 .exceptionHandling(
                         ex -> ex.authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint(loginPageUrl)));
 
@@ -98,13 +115,16 @@ public class SecurityConfig {
     @Order(2)
     SecurityFilterChain applicationSecurityFilterChain(
             HttpSecurity http,
-            KakaoOAuth2UserService kakaoOAuth2UserService,
+            SocialOAuth2UserService socialOAuth2UserService,
             @Value("${dagong.auth.login-page-url}") String loginPageUrl,
             @Value("${dagong.auth.login-success-url}") String loginSuccessUrl,
             @Value("${dagong.auth.login-failure-url}") String loginFailureUrl)
             throws Exception {
         // 세션 정리 API는 CSRF 토큰을 받을 수 없는 맛다공 SPA가 프록시(/auth-api)로 호출하므로 CSRF 검사에서 제외합니다.
-        http.csrf(csrf -> csrf.ignoringRequestMatchers("/auth/session/clear"))
+        // 한 기기 로그인 확인·취소도 CSRF 토큰이 없는 로그인 화면이 부릅니다. 둘 다 이 세션에 확인을 기다리는 로그인이
+        // 있을 때만 동작하고, 그 로그인을 계속하거나 그만두는 일만 하므로 다른 사이트가 불러도 얻는 것이 없습니다.
+        http.csrf(csrf -> csrf.ignoringRequestMatchers(
+                        "/auth/session/clear", "/auth/device/confirm", "/auth/device/cancel"))
                 .authorizeHttpRequests(auth -> auth.requestMatchers(
                                 "/login", "/error", "/auth/**", "/oauth2/authorization/**", "/login/oauth2/code/**")
                         .permitAll()
@@ -116,7 +136,7 @@ public class SecurityConfig {
                         // 저장된 OAuth 인가 요청이 있으면 로그인 뒤 이어서 처리하고, 단독 로그인은 화면으로 돌아옵니다.
                         .defaultSuccessUrl(loginSuccessUrl, false)
                         .failureUrl(loginFailureUrl)
-                        .userInfoEndpoint(userInfo -> userInfo.userService(kakaoOAuth2UserService)));
+                        .userInfoEndpoint(userInfo -> userInfo.userService(socialOAuth2UserService)));
 
         return http.build();
     }
@@ -146,7 +166,7 @@ public class SecurityConfig {
             }
             OAuth2AuthorizationCodeRequestAuthenticationValidator.DEFAULT_REDIRECT_URI_VALIDATOR.accept(context);
         };
-        // 로그인 전 요청은 Kakao 로그인 단계에서 상태를 확인하므로, 인증된 사용자 요청만 검사합니다.
+        // 로그인 전 요청은 소셜 로그인 단계에서 상태를 확인하므로, 인증된 사용자 요청만 검사합니다.
         Consumer<OAuth2AuthorizationCodeRequestAuthenticationContext> accountStatusValidator = context -> {
             OAuth2AuthorizationCodeRequestAuthenticationToken authorizationRequest = context.getAuthentication();
             if (!(authorizationRequest.getPrincipal() instanceof Authentication principal)

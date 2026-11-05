@@ -3,6 +3,7 @@ package com.dagong.auth.account;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import java.util.List;
 
 /** 맛다공 가입 API의 요청·응답 자료형입니다. */
 public final class MembershipModels {
@@ -16,8 +17,10 @@ public final class MembershipModels {
      *
      * @param status 맛다공 서비스 상태(svc_st). 가입 이력이 없으면 null입니다.
      * @param registered status가 ACTIVE일 때만 true입니다.
+     * @param loginProviders 이 계정에 연결된 소셜 제공자 코드(KAKAO, NAVER). 설정 화면의 연결된 계정에 씁니다.
      */
-    public record MembershipStatus(String displayName, String email, ServiceStatus status, boolean registered) {}
+    public record MembershipStatus(
+            String displayName, String email, ServiceStatus status, boolean registered, List<String> loginProviders) {}
 
     /**
      * 가입 화면의 선택 입력입니다. 검사 전에 앞뒤 공백을 지우고, 빈 이메일은 입력하지 않은 것으로 봅니다.

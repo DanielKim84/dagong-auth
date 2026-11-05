@@ -8,15 +8,17 @@ import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
- * 맛다공이 공통 계정의 가입 여부를 확인하고 서비스 가입을 마칠 수 있는 OAuth 보호 API입니다.
+ * 맛다공이 공통 계정의 가입 여부를 확인하고 서비스 가입·가입 취소를 할 수 있는 OAuth 보호 API입니다.
  * 맛다공 client용 토큰(audience)인지는 JwtDecoder가 먼저 확인합니다.
  */
 @RestController
@@ -36,6 +38,13 @@ public class MatdagongMembershipController {
     @PostMapping
     public JoinResult join(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody JoinRequest request) {
         return membershipService.join(accountId(jwt), request);
+    }
+
+    /** 맛다공 가입만 취소합니다. 공통 계정은 남으며, 이미 취소했어도 204로 답합니다. */
+    @DeleteMapping
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void cancel(@AuthenticationPrincipal Jwt jwt) {
+        membershipService.cancel(accountId(jwt));
     }
 
     private static UUID accountId(Jwt jwt) {

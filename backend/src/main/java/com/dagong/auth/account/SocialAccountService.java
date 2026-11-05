@@ -15,15 +15,18 @@ public class SocialAccountService {
         this.jdbc = jdbc;
     }
 
-    /** Kakao 회원번호로 계정을 찾거나 생성합니다. 이메일은 계정 연락처로 자동 사용하지 않습니다. */
+    /**
+     * 소셜 회원 고유번호로 계정을 찾거나 생성합니다. 같은 사람이라도 제공자가 다르면 다른 계정이며,
+     * 이메일은 계정 연락처로 자동 사용하지 않습니다.
+     */
     @Transactional
-    public AccountIdentity authenticateKakao(String providerUserId, String nickname) {
+    public AccountIdentity authenticate(SocialProvider provider, String providerUserId, String nickname) {
         List<AccountIdentity> identities = jdbc.query(
                 """
                 SELECT a.user_id, a.user_st, si.social_id
                 FROM social_identities si
                 JOIN accounts a ON a.user_id = si.user_id
-                WHERE si.provider_cd = 'KAKAO'
+                WHERE si.provider_cd = ?
                   AND si.provider_uid = ?
                   AND si.unlink_dt IS NULL
                 FOR UPDATE OF a, si
@@ -32,6 +35,7 @@ public class SocialAccountService {
                         rs.getObject("user_id", UUID.class),
                         AccountStatus.valueOf(rs.getString("user_st")),
                         rs.getObject("social_id", UUID.class)),
+                provider.code(),
                 providerUserId);
 
         if (!identities.isEmpty()) {
@@ -53,7 +57,7 @@ public class SocialAccountService {
 
         UUID accountId = UUID.randomUUID();
         UUID socialIdentityId = UUID.randomUUID();
-        String displayName = nickname == null || nickname.isBlank() ? "카카오 사용자" : nickname;
+        String displayName = nickname == null || nickname.isBlank() ? provider.defaultDisplayName() : nickname;
 
         // 이메일은 사용자가 선택적으로 등록하는 연락처이므로 소셜 계정의 이메일로 자동 채우지 않습니다.
         jdbc.update(
@@ -67,10 +71,11 @@ public class SocialAccountService {
                 """
                 INSERT INTO social_identities (
                     social_id, user_id, provider_cd, provider_uid, reg_dt, last_auth_dt
-                ) VALUES (?, ?, 'KAKAO', ?, now(), now())
+                ) VALUES (?, ?, ?, ?, now(), now())
                 """,
                 socialIdentityId,
                 accountId,
+                provider.code(),
                 providerUserId);
 
         return new AccountIdentity(accountId, AccountStatus.ACTIVE, socialIdentityId);
