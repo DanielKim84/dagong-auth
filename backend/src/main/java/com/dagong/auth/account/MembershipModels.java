@@ -18,9 +18,16 @@ public final class MembershipModels {
      * @param status 맛다공 서비스 상태(svc_st). 가입 이력이 없으면 null입니다.
      * @param registered status가 ACTIVE일 때만 true입니다.
      * @param loginProviders 이 계정에 연결된 소셜 제공자 코드(KAKAO, NAVER). 설정 화면의 연결된 계정에 씁니다.
+     * @param profileImageUrl 마지막 로그인 때 소셜 제공자가 준 프로필 사진 주소. 사진 제공에 동의하지 않았거나 기본 사진이면
+     *     null입니다. 맛다공 가입 화면이 이 사진을 프로필 사진으로 가져옵니다.
      */
     public record MembershipStatus(
-            String displayName, String email, ServiceStatus status, boolean registered, List<String> loginProviders) {}
+            String displayName,
+            String email,
+            ServiceStatus status,
+            boolean registered,
+            List<String> loginProviders,
+            String profileImageUrl) {}
 
     /**
      * 가입 화면의 선택 입력입니다. 검사 전에 앞뒤 공백을 지우고, 빈 이메일은 입력하지 않은 것으로 봅니다.

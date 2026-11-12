@@ -78,6 +78,25 @@ class MatdagongMembershipServiceIntegrationTest {
     }
 
     @Test
+    void 가입_상태에_가장_최근에_로그인한_소셜_계정의_프로필_사진을_알려준다() {
+        assertThat(service.status(ACCOUNT).profileImageUrl()).isNull();
+        database.jdbc()
+                .update(
+                        """
+                        INSERT INTO social_identities
+                            (social_id, user_id, provider_cd, provider_uid, profile_img_url, reg_dt, last_auth_dt)
+                        VALUES (?, ?, 'KAKAO', 'kakao-1', 'https://k.kakaocdn.net/old.jpg', now(), now() - interval '1 day'),
+                               (?, ?, 'NAVER', 'naver-1', 'https://phinf.pstatic.net/new.jpg', now(), now())
+                        """,
+                        UUID.randomUUID(),
+                        ACCOUNT,
+                        UUID.randomUUID(),
+                        ACCOUNT);
+
+        assertThat(service.status(ACCOUNT).profileImageUrl()).isEqualTo("https://phinf.pstatic.net/new.jpg");
+    }
+
+    @Test
     void 탈퇴한_서비스는_다시_가입할_수_있다() {
         insertService(ACCOUNT, ServiceStatus.WITHDRAWN);
 

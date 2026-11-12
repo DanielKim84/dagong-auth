@@ -15,11 +15,17 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
 /**
- * 카카오·네이버 userinfo 응답에서 회원 고유번호와 별명을 꺼내 공통 계정과 연결한 뒤 UUID 기반 인증 주체를 반환합니다.
+ * 카카오·네이버 userinfo 응답에서 회원 고유번호·별명·프로필 사진 주소를 꺼내 공통 계정과 연결한 뒤 UUID 기반 인증 주체를 반환합니다.
  * 같은 사람이라도 제공자가 다르면 다른 계정입니다. 이메일로 계정을 합치지 않습니다.
  */
 @Service
 public class SocialOAuth2UserService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
+    /** 네이버가 프로필 사진이 없는 회원에게 주는 기본 그림 주소의 경로입니다. */
+    private static final String NAVER_DEFAULT_IMAGE_PATH = "/static/pwe/address/img_profile.png";
+
+    /** social_identities.profile_img_url 칸 길이입니다. */
+    private static final int MAX_IMAGE_URL_LENGTH = 1000;
+
     private final DefaultOAuth2UserService delegate = new DefaultOAuth2UserService();
     private final SocialAccountService socialAccountService;
 
@@ -45,8 +51,8 @@ public class SocialOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                     new OAuth2Error("social_user_id_missing", "소셜 회원번호를 받지 못했습니다.", null));
         }
 
-        SocialAccountService.AccountIdentity identity =
-                socialAccountService.authenticate(provider, profile.providerUserId(), profile.nickname());
+        SocialAccountService.AccountIdentity identity = socialAccountService.authenticate(
+                provider, profile.providerUserId(), profile.nickname(), profile.profileImageUrl());
         if (identity.status() != AccountStatus.ACTIVE) {
             throw new OAuth2AuthenticationException(new OAuth2Error("account_not_active", "이용이 제한된 계정입니다.", null));
         }
@@ -60,25 +66,45 @@ public class SocialOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         return new DefaultOAuth2User(List.of(), accountAttributes, "dagong_account_id");
     }
 
-    /** 카카오: {"id": 123, "kakao_account": {"profile": {"nickname": …}}, "properties": {"nickname": …}} */
-    private static SocialProfile kakaoProfile(Map<String, Object> attributes) {
+    /**
+     * 카카오: {"id": 123, "kakao_account": {"profile": {"nickname": …, "profile_image_url": …, "is_default_image": …}}}.
+     * 별명·사진은 각 동의항목(profile_nickname·profile_image)에 동의했을 때만 오고, 카카오 기본 사진이면 쓰지 않습니다.
+     */
+    static SocialProfile kakaoProfile(Map<String, Object> attributes) {
         Map<String, Object> kakaoAccount = mapValue(attributes.get("kakao_account"));
         Map<String, Object> profile = mapValue(kakaoAccount.get("profile"));
-        Map<String, Object> properties = mapValue(attributes.get("properties"));
+        String imageUrl = Boolean.TRUE.equals(profile.get("is_default_image"))
+                ? null
+                : stringValue(profile.get("profile_image_url"));
         return new SocialProfile(
-                stringValue(attributes.get("id")),
-                firstNonBlank(stringValue(profile.get("nickname")), stringValue(properties.get("nickname"))));
+                stringValue(attributes.get("id")), stringValue(profile.get("nickname")), profileImageUrl(imageUrl));
     }
 
-    /** 네이버: {"resultcode": "00", "response": {"id": …, "nickname": …, "name": …}} */
-    private static SocialProfile naverProfile(Map<String, Object> attributes) {
+    /**
+     * 네이버: {"resultcode": "00", "response": {"id": …, "nickname": …, "profile_image": …}}. 별명·사진은 네이버
+     * Developers 제공 정보에서 고르고 사용자가 동의했을 때만 오며, 사진이 없으면 네이버 기본 그림이 와서 쓰지 않습니다.
+     */
+    static SocialProfile naverProfile(Map<String, Object> attributes) {
         Map<String, Object> response = mapValue(attributes.get("response"));
+        String imageUrl = stringValue(response.get("profile_image"));
         return new SocialProfile(
                 stringValue(response.get("id")),
-                firstNonBlank(stringValue(response.get("nickname")), stringValue(response.get("name"))));
+                stringValue(response.get("nickname")),
+                imageUrl != null && imageUrl.contains(NAVER_DEFAULT_IMAGE_PATH) ? null : profileImageUrl(imageUrl));
     }
 
-    private record SocialProfile(String providerUserId, String nickname) {}
+    /**
+     * 저장할 사진 주소입니다. 맛다공 서버가 https 주소만 내려받으므로 http는 https로 바꿉니다(카카오 CDN은 둘 다 받음).
+     * 비었거나 그 밖의 주소, 칸보다 긴 주소는 버립니다.
+     */
+    static String profileImageUrl(String url) {
+        if (url == null || url.isBlank()) return null;
+        String secure = url.startsWith("http://") ? "https://" + url.substring("http://".length()) : url;
+        return secure.startsWith("https://") && secure.length() <= MAX_IMAGE_URL_LENGTH ? secure : null;
+    }
+
+    /** 별명이 비면 SocialAccountService가 제공자별 기본 이름("카카오 사용자")을 씁니다. */
+    record SocialProfile(String providerUserId, String nickname, String profileImageUrl) {}
 
     private static Map<String, Object> mapValue(Object value) {
         if (value instanceof Map<?, ?> map) {
@@ -91,11 +117,5 @@ public class SocialOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 
     private static String stringValue(Object value) {
         return value == null ? null : value.toString();
-    }
-
-    private static String firstNonBlank(String first, String second) {
-        if (first != null && !first.isBlank()) return first;
-        if (second != null && !second.isBlank()) return second;
-        return null;
     }
 }

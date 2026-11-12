@@ -17,10 +17,12 @@ public class SocialAccountService {
 
     /**
      * 소셜 회원 고유번호로 계정을 찾거나 생성합니다. 같은 사람이라도 제공자가 다르면 다른 계정이며,
-     * 이메일은 계정 연락처로 자동 사용하지 않습니다.
+     * 이메일은 계정 연락처로 자동 사용하지 않습니다. 프로필 사진 주소는 로그인할 때마다 이번에 받은 값으로 바꿉니다
+     * (동의를 거두면 null이 되어 지워짐).
      */
     @Transactional
-    public AccountIdentity authenticate(SocialProvider provider, String providerUserId, String nickname) {
+    public AccountIdentity authenticate(
+            SocialProvider provider, String providerUserId, String nickname, String profileImageUrl) {
         List<AccountIdentity> identities = jdbc.query(
                 """
                 SELECT a.user_id, a.user_st, si.social_id
@@ -47,9 +49,10 @@ public class SocialAccountService {
                 jdbc.update(
                         """
                         UPDATE social_identities
-                        SET last_auth_dt = now()
+                        SET last_auth_dt = now(), profile_img_url = ?
                         WHERE social_id = ? AND unlink_dt IS NULL
                         """,
+                        profileImageUrl,
                         identity.socialIdentityId());
             }
             return identity;
@@ -70,13 +73,14 @@ public class SocialAccountService {
         jdbc.update(
                 """
                 INSERT INTO social_identities (
-                    social_id, user_id, provider_cd, provider_uid, reg_dt, last_auth_dt
-                ) VALUES (?, ?, ?, ?, now(), now())
+                    social_id, user_id, provider_cd, provider_uid, profile_img_url, reg_dt, last_auth_dt
+                ) VALUES (?, ?, ?, ?, ?, now(), now())
                 """,
                 socialIdentityId,
                 accountId,
                 provider.code(),
-                providerUserId);
+                providerUserId,
+                profileImageUrl);
 
         return new AccountIdentity(accountId, AccountStatus.ACTIVE, socialIdentityId);
     }

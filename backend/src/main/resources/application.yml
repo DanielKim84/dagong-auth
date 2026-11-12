@@ -26,12 +26,15 @@ spring:
             client-authentication-method: client_secret_post
             authorization-grant-type: authorization_code
             redirect-uri: ${KAKAO_REDIRECT_URI:http://localhost:4840/login/oauth2/code/kakao}
+            # 카카오 Developers 동의항목에서 둘 다 "선택 동의"로 열어 두었습니다. 여기 적은 항목만 동의 화면에 나옵니다.
+            # 프로필 사진은 맛다공 가입 때 프로필 사진으로 가져옵니다(SocialOAuth2UserService.kakaoProfile).
             scope:
               - profile_nickname
+              - profile_image
             client-name: Kakao
           naver:
             # 네이버 Developers의 Client ID와 Client Secret도 루트 .env에만 둡니다.
-            # 네이버는 scope를 쓰지 않고, 받을 정보(별명 등)는 네이버 Developers의 제공 정보 선택에서 정합니다.
+            # 네이버는 scope를 쓰지 않고, 받을 정보(별명·프로필 사진)는 네이버 Developers의 제공 정보 선택에서 정합니다.
             client-id: ${NAVER_CLIENT_ID:unconfigured}
             client-secret: ${NAVER_CLIENT_SECRET:unconfigured}
             client-authentication-method: client_secret_post

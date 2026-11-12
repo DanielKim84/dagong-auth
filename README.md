@@ -85,7 +85,8 @@ Dockerfile도 이 JAR를 사용합니다. 로컬 화면 개발에는 Vite 서버
 
 - React 로그인 화면: 시안의 로고·배경·캐릭터가 이어지는 상단, 카카오·네이버 버튼.
 - 카카오·네이버 OAuth2 로그인은 공통 계정을 생성하거나 기존 계정에 연결합니다(`SocialOAuth2UserService`, `social_identities.provider_cd`는 `KAKAO`·`NAVER`). 같은 사람이라도 제공자가 다르면 다른 계정이고, 이메일로 계정을 합치지 않습니다. 키는 루트 `.env`(`KAKAO_*`, `NAVER_*`)에 설정하고, 각 Developers 콘솔에 Redirect URI `http://localhost:4840/login/oauth2/code/kakao`·`.../naver`를 등록해야 실제 인증할 수 있습니다.
-- 맛다공 가입 상태 API(`GET /api/v1/matdagong/membership`)는 연결된 소셜 제공자 코드를 `loginProviders`로 함께 돌려줍니다(설정의 연결된 계정 표시).
+- 맛다공 가입 상태 API(`GET /api/v1/matdagong/membership`)는 연결된 소셜 제공자 코드를 `loginProviders`로(설정의 연결된 계정 표시), 마지막 로그인 때 받은 프로필 사진 주소를 `profileImageUrl`로 함께 돌려줍니다.
+- 받는 소셜 정보는 별명과 프로필 사진(선택 동의)뿐입니다. 카카오는 `application.yml`의 scope(`profile_nickname`·`profile_image`)만 동의 화면에 나오고(Developers 동의항목도 둘 다 "선택 동의"), 네이버는 Developers의 제공 정보 선택에서 별명·프로필 사진을 고릅니다. 사진 주소는 https로 맞춰 `social_identities.profile_img_url`에 로그인마다 새로 저장하고, 기본 사진이거나 동의하지 않으면 비웁니다. 맛다공은 가입할 때 이 사진을 한 번 내려받아 자기 프로필 사진으로 저장합니다.
 - Apple 로그인은 아이폰 앱을 출시할 때 iOS에서만 보이게 붙일 예정이라 지금은 버튼을 두지 않습니다. 맛다공은 `/auth/callback`에서 인가 코드를 토큰으로 교환하고 서비스 가입 또는 홈으로 이어집니다.
 - /login?error, /login?logout 안내를 React 상태로 표시합니다.
 - **한 기기 로그인(맛다공)**: 계정마다 휴대폰 1대·PC 1대까지 맛다공에 로그인할 수 있습니다(`device` 패키지). 기기는 인증 서버가 심는 쿠키 `dagong_device`로, 종류는 User-Agent로 나눕니다(태블릿은 휴대폰).

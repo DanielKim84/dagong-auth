@@ -61,7 +61,8 @@ public class MatdagongMembershipService {
                             rs.getString("email"),
                             status,
                             status == ServiceStatus.ACTIVE,
-                            List.of());
+                            List.of(),
+                            null);
                 },
                 SERVICE_CODE,
                 accountId);
@@ -79,8 +80,25 @@ public class MatdagongMembershipService {
                 """,
                 String.class,
                 accountId);
+        // 이번에 로그인한 소셜 계정의 사진입니다(가장 최근에 인증한 연결).
+        // 사진이 없는 연결은 NULL 행이라 Optional 대신 목록으로 받습니다.
+        List<String> latestImage = jdbc.queryForList(
+                """
+                SELECT profile_img_url FROM social_identities
+                WHERE user_id = ? AND unlink_dt IS NULL
+                ORDER BY last_auth_dt DESC NULLS LAST
+                LIMIT 1
+                """,
+                String.class,
+                accountId);
+        String profileImageUrl = latestImage.isEmpty() ? null : latestImage.get(0);
         return new MembershipStatus(
-                current.displayName(), current.email(), current.status(), current.registered(), loginProviders);
+                current.displayName(),
+                current.email(),
+                current.status(),
+                current.registered(),
+                loginProviders,
+                profileImageUrl);
     }
 
     /** 신규 사용자의 선택 입력을 저장하고 맛다공 서비스 가입을 완료합니다. 이미 가입된 경우도 성공으로 봅니다. */
