@@ -103,7 +103,7 @@ public class SocialOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         return secure.startsWith("https://") && secure.length() <= MAX_IMAGE_URL_LENGTH ? secure : null;
     }
 
-    /** 별명이 비면 SocialAccountService가 제공자별 기본 이름("카카오 사용자")을 씁니다. */
+    /** 별명이 비면 계정 이름을 비워 두고, 서비스 가입 화면에서 사용자가 정합니다(SocialAccountService). */
     record SocialProfile(String providerUserId, String nickname, String profileImageUrl) {}
 
     private static Map<String, Object> mapValue(Object value) {

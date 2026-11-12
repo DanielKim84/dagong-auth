@@ -15,6 +15,7 @@ public final class MembershipModels {
     /**
      * 맛다공 가입 상태입니다.
      *
+     * @param displayName 공통 계정 이름. 소셜 별명을 받지 못했고 아직 가입 전이면 null이고, 가입 화면은 닉네임 칸을 비워 둡니다.
      * @param status 맛다공 서비스 상태(svc_st). 가입 이력이 없으면 null입니다.
      * @param registered status가 ACTIVE일 때만 true입니다.
      * @param loginProviders 이 계정에 연결된 소셜 제공자 코드(KAKAO, NAVER). 설정 화면의 연결된 계정에 씁니다.

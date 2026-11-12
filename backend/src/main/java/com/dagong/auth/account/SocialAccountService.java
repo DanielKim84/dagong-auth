@@ -60,7 +60,8 @@ public class SocialAccountService {
 
         UUID accountId = UUID.randomUUID();
         UUID socialIdentityId = UUID.randomUUID();
-        String displayName = nickname == null || nickname.isBlank() ? provider.defaultDisplayName() : nickname;
+        // 별명을 받지 못하면 비워 두고, 서비스 가입 화면에서 사용자가 닉네임을 정합니다(V7).
+        String displayName = nickname == null || nickname.isBlank() ? null : nickname.trim();
 
         // 이메일은 사용자가 선택적으로 등록하는 연락처이므로 소셜 계정의 이메일로 자동 채우지 않습니다.
         jdbc.update(

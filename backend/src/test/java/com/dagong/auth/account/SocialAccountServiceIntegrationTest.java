@@ -71,12 +71,12 @@ class SocialAccountServiceIntegrationTest {
     }
 
     @Test
-    void 별명을_받지_못하면_제공자별_기본_이름을_쓴다() {
+    void 별명을_받지_못하면_계정_이름을_비워_둔다() {
         var naver = service.authenticate(SocialProvider.NAVER, "naver-2", " ", null);
 
         assertThat(database.jdbc()
                         .queryForObject(
                                 "SELECT user_nm FROM accounts WHERE user_id = ?", String.class, naver.accountId()))
-                .isEqualTo("네이버 사용자");
+                .isNull();
     }
 }
