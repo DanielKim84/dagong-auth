@@ -24,7 +24,6 @@
   --kakao-bg: #fee500;
   --kakao-ink: #191600;
   --naver-bg: #03a94d;
-  --apple-bg: #111111;
   --font-body: "Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI", "Malgun Gothic", "Noto Sans KR", sans-serif;
   --font-display: "Jua", var(--font-body);
   --radius-control: 16px;
@@ -173,36 +172,6 @@ button:focus-visible {
 .naver {
   color: var(--on-strong);
   background: var(--naver-bg);
-}
-
-.apple {
-  color: var(--on-strong);
-  background: var(--apple-bg);
-}
-
-/* 준비 중인 로그인은 흐리게 두고, 누르면 안내만 띄웁니다. */
-.social-button.is-unavailable {
-  cursor: not-allowed;
-  opacity: 0.45;
-}
-
-.social-button.is-unavailable:hover {
-  filter: none;
-}
-
-.social-button.is-unavailable:active {
-  transform: none;
-}
-
-.coming-soon {
-  display: inline-flex;
-  height: 22px;
-  align-items: center;
-  border-radius: var(--radius-pill);
-  background: color-mix(in srgb, var(--on-strong) 22%, transparent);
-  padding: 0 8px;
-  font-size: 12px;
-  font-weight: 700;
 }
 
 /* 다른 기기 로그인으로 로그아웃됐다는 한 줄 안내 */

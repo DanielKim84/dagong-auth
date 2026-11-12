@@ -6,8 +6,8 @@ import LoginHero from "../components/LoginHero";
 import SocialLoginButton, { type SocialProvider } from "../components/SocialLoginButton";
 
 type Toast = { kind: AuthToastKind; title: string; message: string };
-// 연동된 카카오·네이버를 위에 두고, 준비 중인 Apple은 아래에 비활성으로 보여줍니다.
-const SOCIAL_PROVIDERS: SocialProvider[] = ["kakao", "naver", "apple"];
+// 연동된 카카오·네이버만 보여 줍니다. Apple은 아이폰 앱을 출시할 때 iOS에서만 보이게 붙일 예정입니다.
+const SOCIAL_PROVIDERS: SocialProvider[] = ["kakao", "naver"];
 
 function initialToast(): Toast | null {
   const url = new URL(window.location.href);
@@ -83,17 +83,7 @@ export default function LoginPage() {
           )}
           <div className="social-buttons">
             {SOCIAL_PROVIDERS.map((provider) => (
-              <SocialLoginButton
-                key={provider}
-                provider={provider}
-                onUnavailable={(providerName) =>
-                  setToast({
-                    kind: "info",
-                    title: `${providerName} 로그인은 준비 중이에요`,
-                    message: "지금은 카카오나 네이버로 가입하고 로그인할 수 있어요.",
-                  })
-                }
-              />
+              <SocialLoginButton key={provider} provider={provider} />
             ))}
           </div>
         </section>
