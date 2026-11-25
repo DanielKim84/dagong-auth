@@ -8,7 +8,7 @@ import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
 import org.springframework.security.oauth2.jwt.Jwt;
 
 /**
- * 인증 서버 API(맛다공 가입 상태, 게이트웨이의 로그인 확인 등)에 온 access token의 인가 기록이 아직 남아 있는지 확인합니다.
+ * 인증 서버 API(맛다공 가입 상태, 맛다공 서버의 로그인 확인 등)에 온 access token의 인가 기록이 아직 남아 있는지 확인합니다.
  * 다른 기기 로그인·로그아웃·탈퇴로 인가 기록을 지운 토큰은 서명이 맞아도 401로 거부합니다.
  *
  * <p>인가 기록 저장소(findByToken)로 읽으면 저장된 토큰 정보(JSON)를 객체로 되살리는데, 그 안의 목록 형식을 보안 설정이

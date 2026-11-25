@@ -171,7 +171,8 @@ public class MatdagongMembershipService {
     /**
      * 탈퇴한 계정이 맛다공 client로 받은 로그인 기록(oauth2_authorization: 인가 코드·access token 기록)을 지웁니다.
      * 브라우저 공개 client라 refresh token이 없어 새 토큰을 더 받을 수 없게 되고, 다시 쓰려면 로그인과 가입부터 해야 합니다.
-     * access token은 서명된 JWT라 이미 받은 것은 만료(기본 30분) 전까지 형식상 유효하며, 이 브라우저의 토큰은 화면이 로그아웃하며 지웁니다.
+     * 이미 받은 access token은 서명으로는 만료(기본 30분)까지 유효하지만, 인가 기록이 없어 이 서버의 API(ActiveAuthorizationValidator)와
+     * 맛다공 서버의 로그인 확인(/api/v1/matdagong/session)에서 401이 됩니다. 이 브라우저의 토큰은 화면이 로그아웃하며 지웁니다.
      * 다른 다공 서비스의 로그인 기록과 동의 기록(oauth2_authorization_consent)은 건드리지 않습니다.
      */
     private void revokeMatdagongAuthorizations(UUID accountId) {

@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import AuthToast, { type AuthToastKind } from "../components/AuthToast";
+import AuthToast from "../components/AuthToast";
 import DagongIntro from "../components/DagongIntro";
 import DeviceConfirm from "../components/DeviceConfirm";
 import LoginError from "../components/LoginError";
 import SocialLoginButton, { type SocialProvider } from "../components/SocialLoginButton";
 
-type Toast = { kind: AuthToastKind; title: string; message: string };
+type Toast = { title: string; message: string };
 // 연동된 카카오·네이버만 보여 줍니다. Apple은 아이폰 앱을 출시할 때 iOS에서만 보이게 붙일 예정입니다.
 const SOCIAL_PROVIDERS: SocialProvider[] = ["kakao", "naver"];
 const FOOD_PHOTO_URL = `${import.meta.env.BASE_URL}assets/login-food.jpg`;
@@ -16,10 +16,10 @@ function initialToast(): Toast | null {
   // 로그아웃(?logout)·로그인 성공(?login=success, AUTH_LOGIN_SUCCESS_URL에서 지정) 뒤 붙는 query parameter를 화면 안내로 바꿉니다.
   // 로그인 실패(?error)는 안내가 아니라 따로 된 오류 화면(LoginError)으로 보여 줍니다.
   if (parameters.has("logout")) {
-    return { kind: "success", title: "로그아웃했어요", message: "다음에 또 맛있는 곳을 함께 찾아요." };
+    return { title: "로그아웃했어요", message: "다음에 또 맛있는 곳을 함께 찾아요." };
   }
   if (parameters.get("login") === "success") {
-    return { kind: "success", title: "로그인됐어요", message: "다공 서비스를 이어서 이용해 주세요." };
+    return { title: "로그인됐어요", message: "다공 서비스를 이어서 이용해 주세요." };
   }
   return null;
 }
@@ -94,9 +94,7 @@ export default function LoginPage() {
   return (
     <main className={`login-card${hasError || isDeviceConfirm ? "" : " is-login"}`} aria-label="다공 계정 로그인">
       {content}
-      {toast && (
-        <AuthToast kind={toast.kind} title={toast.title} message={toast.message} onDismiss={() => setToast(null)} />
-      )}
+      {toast && <AuthToast title={toast.title} message={toast.message} onDismiss={() => setToast(null)} />}
     </main>
   );
 }

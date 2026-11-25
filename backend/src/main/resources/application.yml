@@ -9,8 +9,9 @@ spring:
   application:
     name: dagong-auth
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/dagong_auth}
-    username: ${DB_USERNAME:dagong_auth}
+    # 공유 개발 DB(Neon)를 .env의 DB_*로 지정합니다. 기본값이 없어 비어 있으면 시작하지 않습니다.
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
   flyway:
     # DB 구조와 설명은 버전별 SQL로 관리하고 서버 시작 시 적용합니다.
