@@ -92,7 +92,7 @@ class AccountStatusTokenIntegrationTest {
                 .clientId("matdagong-web-dev")
                 .clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-                .redirectUri("http://localhost:4845/auth/callback")
+                .redirectUri("http://localhost:5845/auth/callback")
                 .build();
         return JwtEncodingContext.with(JwsHeader.with(SignatureAlgorithm.RS256), JwtClaimsSet.builder())
                 .registeredClient(client)

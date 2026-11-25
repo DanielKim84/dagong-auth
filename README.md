@@ -68,7 +68,7 @@ frontend/index.html은 React 진입 HTML이며 화면 코드는 LoginPage.tsx에
 3. 공통 개발 환경 안내의 공유 Neon DB를 사용하고 루트의 `.env`를 `.env.example`에서 복사해 DB 접속 정보, 고유한 서명 키 비밀번호, Kakao REST API 키와 Client Secret을 설정합니다. Kakao Developers에서 카카오 로그인을 켜고 아래 Redirect URI를 등록합니다. 그 비밀번호로 로컬 서명 키를 한 번 생성합니다.
 
    ```text
-   http://localhost:4840/login/oauth2/code/kakao
+   http://localhost:5840/login/oauth2/code/kakao
    ```
 
    ```powershell
@@ -79,8 +79,8 @@ frontend/index.html은 React 진입 HTML이며 화면 코드는 LoginPage.tsx에
 
    최초 실행 시 Flyway가 V1부터 현재 버전까지 스키마를 순서대로 적용합니다.
 4. Gradle 창에서 backend → Tasks → application → bootRun을 실행합니다.
-   터미널에서는 루트에서 .\gradlew.bat :backend:bootRun 을 실행합니다. 인증 API는 5840 포트에서 시작합니다.
-5. React 화면 개발 서버를 실행한 뒤 http://localhost:4840/login 에 접속합니다.
+   터미널에서는 루트에서 .\gradlew.bat :backend:bootRun 을 실행합니다. 인증 API는 4840 포트에서 시작합니다.
+5. React 화면 개발 서버를 실행한 뒤 http://localhost:5840/login 에 접속합니다.
 
 processResources가 React 빌드를 자동 실행하고 결과를 backend/build/resources/main/static/auth에 포함합니다. IntelliJ Java 클래스 직접 실행보다 Gradle bootRun을 권장합니다. 직접 실행 시에는 먼저 :backend:classes를 실행하고 backend 모듈 classpath를 사용하세요.
 
@@ -88,20 +88,20 @@ processResources가 React 빌드를 자동 실행하고 결과를 backend/build/
 
 ## 화면 개발
 
-프로젝트 루트 또는 frontend에서 npm run dev 실행 후 http://localhost:4840/login 접속합니다. React 화면 수정은 즉시 반영됩니다.
-화면은 4840, 인증 API 서버는 5840에서 실행합니다. Vite가 OAuth 요청과 카카오·네이버 callback 경로를 인증 API 서버로 전달합니다. Kakao Developers의 callback 주소는 http://localhost:4840/login/oauth2/code/kakao 입니다.
+프로젝트 루트 또는 frontend에서 npm run dev 실행 후 http://localhost:5840/login 접속합니다. React 화면 수정은 즉시 반영됩니다.
+화면은 5840, 인증 API 서버는 4840에서 실행합니다. Vite가 OAuth 요청과 카카오·네이버 callback 경로를 인증 API 서버로 전달합니다. Kakao Developers의 callback 주소는 http://localhost:5840/login/oauth2/code/kakao 입니다.
 
 ## 배포
 
 frontend에서 npm ci 실행 후 루트에서 .\gradlew.bat :backend:bootJar 실행.
 backend/build/libs/dagong-auth.jar에 React 빌드가 포함됩니다.
-Dockerfile도 이 JAR를 사용합니다. 로컬 화면 개발에는 Vite 서버(4840)를 사용하며, 통합 JAR는 자체 정적 화면도 제공합니다.
+Dockerfile도 이 JAR를 사용합니다. 로컬 화면 개발에는 Vite 서버(5840)를 사용하며, 통합 JAR는 자체 정적 화면도 제공합니다.
 프런트 빌드 결과를 src/main/resources에 수동 복사하지 않습니다.
 
 ## 현재 기능 범위
 
 - React 로그인 화면(보드 02-02~02-04): 다공 로고·제목·설명과 카카오·네이버 버튼·음식 사진, 로그인 실패(`?error`) 때 따로 된 오류 화면, 한 기기 로그인 확인 화면.
-- 카카오·네이버 OAuth2 로그인은 공통 계정을 생성하거나 기존 계정에 연결합니다(`SocialOAuth2UserService`, `social_identities.provider_cd`는 `KAKAO`·`NAVER`). 같은 사람이라도 제공자가 다르면 다른 계정이고, 이메일로 계정을 합치지 않습니다. 키는 루트 `.env`(`KAKAO_*`, `NAVER_*`)에 설정하고, 각 Developers 콘솔에 Redirect URI `http://localhost:4840/login/oauth2/code/kakao`·`.../naver`를 등록해야 실제 인증할 수 있습니다.
+- 카카오·네이버 OAuth2 로그인은 공통 계정을 생성하거나 기존 계정에 연결합니다(`SocialOAuth2UserService`, `social_identities.provider_cd`는 `KAKAO`·`NAVER`). 같은 사람이라도 제공자가 다르면 다른 계정이고, 이메일로 계정을 합치지 않습니다. 키는 루트 `.env`(`KAKAO_*`, `NAVER_*`)에 설정하고, 각 Developers 콘솔에 Redirect URI `http://localhost:5840/login/oauth2/code/kakao`·`.../naver`를 등록해야 실제 인증할 수 있습니다.
 - 맛다공 가입 상태 API(`GET /api/v1/matdagong/membership`)는 연결된 소셜 제공자 코드를 `loginProviders`로(설정의 연결된 계정 표시), 마지막 로그인 때 받은 프로필 사진 주소를 `profileImageUrl`로 함께 돌려줍니다.
 - 받는 소셜 정보는 별명과 프로필 사진(선택 동의)뿐입니다. 카카오는 `application.yml`의 scope(`profile_nickname`·`profile_image`)만 동의 화면에 나오고(Developers 동의항목도 둘 다 "선택 동의"), 네이버는 Developers의 제공 정보 선택에서 별명·프로필 사진을 고릅니다. 사진 주소는 https로 맞춰 `social_identities.profile_img_url`에 로그인마다 새로 저장하고, 기본 사진이거나 동의하지 않으면 비웁니다. 맛다공은 가입할 때 이 사진을 한 번 내려받아 자기 프로필 사진으로 저장합니다.
 - Apple 로그인은 아이폰 앱을 출시할 때 iOS에서만 보이게 붙일 예정이라 지금은 버튼을 두지 않습니다. 맛다공은 `/auth/callback`에서 인가 코드를 토큰으로 교환하고 서비스 가입 또는 홈으로 이어집니다.
@@ -113,7 +113,7 @@ Dockerfile도 이 JAR를 사용합니다. 로컬 화면 개발에는 Vite 서버
   - 인증 서버 API(맛다공 가입 상태 등)는 인가 기록이 지워진 토큰을 401로 거부합니다(`ActiveAuthorizationValidator`). 맛다공 커뮤니티·장소 API는 서명만 보므로, 맛다공 게이트웨이가 API 요청을 넘기기 전에 `GET /api/v1/matdagong/session`(DB에 쓰지 않는 확인 주소, 계정 차단도 함께 확인)으로 로그인 중인지 묻고 끝난 토큰은 401로 막습니다. 게이트웨이는 답을 토큰별로 30초 기억하므로 다른 기기 로그인 뒤 최대 30초쯤은 이전 기기 요청이 통과할 수 있습니다. 맛다공 화면은 앱으로 돌아올 때 가입 상태를 한 번 물어 마지막 접속 시각을 남기고, 로그인이 끝났으면 바로 다시 로그인합니다.
   - 사용자가 직접 로그아웃하면(`POST /auth/session/clear?endDeviceLogin=true`) 이 기기의 맛다공 인가 기록도 지워, 다른 기기에서 로그인할 때 묻지 않습니다. 여다공 등 다른 client의 로그인에는 영향이 없습니다.
 - 계정·소셜 연결·서비스 이용 현황·관리자 조치·권한·OAuth 인가/동의 저장소는 Flyway 스크립트로 관리합니다.
-- 개발 OAuth client_id: matdagong-web-dev, Authorization Code + PKCE, redirect_uri 기본값: http://localhost:4845/auth/callback.
+- 개발 OAuth client_id: matdagong-web-dev, Authorization Code + PKCE, redirect_uri 기본값: http://localhost:5845/auth/callback.
 - client 설정은 `application.yml`의 `dagong.auth.matdagong-client-id` / `dagong.auth.matdagong-redirect-uri`로 변경 가능합니다. 설정한 redirect URI와 access token 수명은 서버 시작 시 개발용 client 항목에 반영됩니다.
 - access token 수명 기본값은 30분(`PT30M`)입니다. 브라우저 공개 클라이언트에는 refresh token을 발급하지 않으므로, 개발 PC에서만 `.env`의 `AUTH_ACCESS_TOKEN_TTL`(ISO-8601, 예: `PT8H`)로 늘립니다.
 - access token에는 client_id를 audience로, `account_roles`의 활성 권한(ADMIN, SUPER_TASTER)을 `roles` 클레임으로 넣습니다.

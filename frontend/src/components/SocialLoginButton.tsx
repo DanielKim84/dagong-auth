@@ -18,7 +18,7 @@ export default function SocialLoginButton({ provider }: { provider: SocialProvid
   const providerName = PROVIDER_NAMES[provider];
 
   function startLogin() {
-    // 소셜 인증은 백엔드에서 시작합니다. 개발 중에는 Vite가 5840으로 전달하고, 배포에서는 같은 서버가 처리합니다.
+    // 소셜 인증은 백엔드에서 시작합니다. 개발 중에는 Vite가 4840으로 전달하고, 배포에서는 같은 서버가 처리합니다.
     window.location.assign(`/oauth2/authorization/${provider}`);
   }
 
