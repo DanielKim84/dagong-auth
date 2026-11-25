@@ -8,6 +8,8 @@
 
 코딩 스타일과 서식 도구는 맛다공 저장소의 [코딩 스타일](https://github.com/DanielKim84/matdagong/blob/main/docs/coding-style.md)을 따릅니다. AI 도구 지침은 [AGENTS.md](AGENTS.md)에 있습니다.
 
+공통 계정에서 사용하는 다공 브랜드는 [브랜드 D 가이드](frontend/public/assets/brand/README.md)를 따릅니다. Claude Code도 `CLAUDE.md` → `AGENTS.md`를 통해 같은 가이드를 읽습니다.
+
 ## 구조
 
 ```text
@@ -29,18 +31,33 @@ dagong-auth/
 │  │  ├─ main.tsx       React 시작
 │  │  ├─ App.tsx
 │  │  ├─ pages/LoginPage.tsx
-│  │  ├─ components/    LoginHero, SocialLoginButton, AccountFooter, AuthToast
+│  │  ├─ components/    DagongIntro, SocialLoginButton, LoginError, DeviceConfirm, MatdagongMark, AuthToast
 │  │  └─ styles/login.css
-│  ├─ public/assets/   로그인 화면 이미지
+│  ├─ public/assets/
+│  │  ├─ brand/        다공 공통 브랜드 D: 로고·심볼·아이콘·가이드
+│  │  └─ matdagong-*   현재 로그인 화면에서 사용하는 맛다공 이미지
 │  └─ package.json
-├─ assets/             Kakao Developers 앱 아이콘 원본
+├─ assets/             이전 맛다공용 Kakao Developers 업로드 이미지
 ├─ .run/               공유 IntelliJ 실행 구성
 ├─ build.gradle        루트 집계
 ├─ settings.gradle
 └─ gradlew.bat
 ```
 
-frontend/index.html은 React 진입 HTML이며 화면 코드는 LoginPage.tsx에 있습니다. Kakao Developers에 등록하는 앱 아이콘은 `assets/kakao-developers-app-icon.png`에 보관하며, 웹 화면의 정적 이미지와 분리해 번들에 포함하지 않습니다.
+frontend/index.html은 React 진입 HTML이며 화면 코드는 LoginPage.tsx에 있습니다. 공통 다공 앱에 등록할 아이콘은 `frontend/public/assets/brand/app-icon-upload.png`를 사용합니다. 기존 `assets/kakao-developers-app-icon.png`는 이전 맛다공 이미지이므로 다공 D안의 기준 파일로 사용하지 않습니다.
+
+## 다공 공통 브랜드
+
+2026-11-17 선택한 D2를 **D안**으로 확정했습니다. 다공은 맛다공·여다공을 운영하는 상위 브랜드입니다. 공통 계정에는 다공의 단정한 프레임 심볼과 `dagong` 워드마크를 사용하고, 개별 서비스의 아이콘·로고·캐릭터는 각 서비스에서 관리합니다.
+
+- 자산과 상세 사용 규칙의 기준 위치: [frontend/public/assets/brand/](frontend/public/assets/brand/README.md)
+- 전체 구성: [브랜드 보드](frontend/public/assets/brand/brand-guide.png)
+- 밝은 배경용 [가로 로고](frontend/public/assets/brand/brand-logo.png), 어두운 배경용 [반전 로고](frontend/public/assets/brand/brand-logo-inverse.png), [독립 심볼](frontend/public/assets/brand/brand-symbol.png)
+- 공통 계정용 [아이콘 원본](frontend/public/assets/brand/app-icon.png), 250KB 제한 [업로드용 아이콘](frontend/public/assets/brand/app-icon-upload.png) — 512×512 PNG, 203,000바이트
+
+기준 색상은 차콜 `#20252B`, 코랄 `#EF365B`, 흰색 `#FFFFFF`입니다. 로고 주변 여백·배경별 사용·업로드 절차는 상세 가이드에서 관리합니다. 임시 다운로드 경로나 다른 저장소에 있는 복사본을 원본으로 참조하지 않습니다.
+
+2026-11-24 로그인 화면을 맛다공 UI 보드 02(02-02~02-04)에 맞춰 바꿨습니다. 로그인 화면 위쪽은 D안 가로 로고(`brand/brand-logo.png`)이고, 로그인 오류·다른 기기 확인 화면은 맛다공 세로 로고(`assets/matdagong-symbol.png`, 맛다공 앱 아이콘 복사본)를 씁니다. 아래 음식 사진 `assets/login-food.jpg`는 보드 시안용 생성 이미지이며 출시 전에 확정 사진으로 바꿉니다. 외부 Kakao Developers·네이버 개발자 콘솔 등록은 아직 하지 않았습니다. 이 적용 상태가 바뀌면 이 절과 상세 가이드를 함께 갱신합니다.
 
 ## 처음 실행
 
@@ -48,7 +65,7 @@ frontend/index.html은 React 진입 HTML이며 화면 코드는 LoginPage.tsx에
 
 1. IntelliJ에서 루트 build.gradle을 다시 불러옵니다. Java SDK는 21입니다.
 2. Node.js 24.22.1 이상(24 LTS 계열)을 설치하고 frontend 폴더에서 npm ci를 실행합니다. 사용할 버전은 `frontend/.nvmrc`에 기록합니다.
-3. PostgreSQL을 실행하고 루트의 `.env`를 `.env.example`에서 복사해 DB 접속 정보, 고유한 서명 키 비밀번호, Kakao REST API 키와 Client Secret을 설정합니다. Kakao Developers에서 카카오 로그인을 켜고 아래 Redirect URI를 등록합니다. 그 비밀번호로 로컬 서명 키를 한 번 생성합니다.
+3. 공통 개발 환경 안내의 공유 Neon DB를 사용하고 루트의 `.env`를 `.env.example`에서 복사해 DB 접속 정보, 고유한 서명 키 비밀번호, Kakao REST API 키와 Client Secret을 설정합니다. Kakao Developers에서 카카오 로그인을 켜고 아래 Redirect URI를 등록합니다. 그 비밀번호로 로컬 서명 키를 한 번 생성합니다.
 
    ```text
    http://localhost:4840/login/oauth2/code/kakao
@@ -83,13 +100,13 @@ Dockerfile도 이 JAR를 사용합니다. 로컬 화면 개발에는 Vite 서버
 
 ## 현재 기능 범위
 
-- React 로그인 화면: 시안의 로고·배경·캐릭터가 이어지는 상단, 카카오·네이버 버튼.
+- React 로그인 화면(보드 02-02~02-04): 다공 로고·제목·설명과 카카오·네이버 버튼·음식 사진, 로그인 실패(`?error`) 때 따로 된 오류 화면, 한 기기 로그인 확인 화면.
 - 카카오·네이버 OAuth2 로그인은 공통 계정을 생성하거나 기존 계정에 연결합니다(`SocialOAuth2UserService`, `social_identities.provider_cd`는 `KAKAO`·`NAVER`). 같은 사람이라도 제공자가 다르면 다른 계정이고, 이메일로 계정을 합치지 않습니다. 키는 루트 `.env`(`KAKAO_*`, `NAVER_*`)에 설정하고, 각 Developers 콘솔에 Redirect URI `http://localhost:4840/login/oauth2/code/kakao`·`.../naver`를 등록해야 실제 인증할 수 있습니다.
 - 맛다공 가입 상태 API(`GET /api/v1/matdagong/membership`)는 연결된 소셜 제공자 코드를 `loginProviders`로(설정의 연결된 계정 표시), 마지막 로그인 때 받은 프로필 사진 주소를 `profileImageUrl`로 함께 돌려줍니다.
 - 받는 소셜 정보는 별명과 프로필 사진(선택 동의)뿐입니다. 카카오는 `application.yml`의 scope(`profile_nickname`·`profile_image`)만 동의 화면에 나오고(Developers 동의항목도 둘 다 "선택 동의"), 네이버는 Developers의 제공 정보 선택에서 별명·프로필 사진을 고릅니다. 사진 주소는 https로 맞춰 `social_identities.profile_img_url`에 로그인마다 새로 저장하고, 기본 사진이거나 동의하지 않으면 비웁니다. 맛다공은 가입할 때 이 사진을 한 번 내려받아 자기 프로필 사진으로 저장합니다.
 - Apple 로그인은 아이폰 앱을 출시할 때 iOS에서만 보이게 붙일 예정이라 지금은 버튼을 두지 않습니다. 맛다공은 `/auth/callback`에서 인가 코드를 토큰으로 교환하고 서비스 가입 또는 홈으로 이어집니다.
 - /login?error, /login?logout 안내를 React 상태로 표시합니다.
-- **한 기기 로그인(맛다공)**: 계정마다 휴대폰 1대·PC 1대까지 맛다공에 로그인할 수 있습니다(`device` 패키지). 기기는 인증 서버가 심는 쿠키 `dagong_device`로, 종류는 User-Agent로 나눕니다(태블릿은 휴대폰).
+- **한 기기 로그인(맛다공)**: 계정마다 휴대폰 1대·PC 1대까지 맛다공에 로그인할 수 있습니다(`device` 패키지). 설정 `dagong.auth.single-device-login`(환경 변수 `AUTH_SINGLE_DEVICE_LOGIN`, 기본 켜짐)으로 켜고 끕니다. 운영은 켜 둔 채로 두고, 개발 PC에서 같은 계정으로 여러 브라우저·기기를 시험할 때만 끕니다(지금 개발 PC의 auth-api 실행 설정이 꺼 둔 상태). 기기는 인증 서버가 심는 쿠키 `dagong_device`로, 종류는 User-Agent로 나눕니다(태블릿은 휴대폰).
   - `SingleDeviceLoginFilter`가 맛다공 인가 요청(`/oauth2/authorize?client_id=맛다공`)마다 같은 종류의 다른 기기에 로그인이 남았는지 봅니다. 남았으면 로그인 화면 `?device-confirm=MOBILE|PC`로 보내 "다른 휴대폰에서 로그인되어 있어요"를 묻고, 계속(`POST /auth/device/confirm`)하면 그 기기의 맛다공 인가 기록(`oauth2_authorization`)을 지우며, 취소(`POST /auth/device/cancel`)하면 SSO 세션을 끊고 처음 로그인 화면으로 돌아갑니다.
   - 어느 인가 기록이 어느 기기의 것인지는 `matdagong_device_logins`에 남깁니다(`DeviceTrackingAuthorizationService`가 인가 코드를 저장할 때). 로그인 중인지는 그 인가 기록의 access token이 만료 전인지로 봅니다.
   - 로그아웃된 기기는 `matdagong_device_signouts`에 남고, 그 기기가 로그인 화면을 열면 `GET /auth/device/notice`로 "다른 기기에서 로그인되어 이 기기는 로그아웃됐어요"를 한 번 보여 줍니다.

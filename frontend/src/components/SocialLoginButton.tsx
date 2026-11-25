@@ -27,7 +27,7 @@ export default function SocialLoginButton({ provider }: { provider: SocialProvid
       <svg className="provider-icon" viewBox="0 0 24 24" aria-hidden="true">
         <path fill="currentColor" d={ICON_PATHS[provider]} />
       </svg>
-      <span>{providerName}로 시작하기</span>
+      <span>{providerName}로 로그인</span>
     </button>
   );
 }

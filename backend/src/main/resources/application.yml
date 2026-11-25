@@ -71,6 +71,10 @@ dagong:
     keystore-alias: ${AUTH_KEYSTORE_ALIAS:dagong-auth-signing}
     # 맛다공 access token 수명(ISO-8601). refresh token이 없으므로 기본값은 짧게 둡니다.
     access-token-ttl: ${AUTH_ACCESS_TOKEN_TTL:PT30M}
+    # 맛다공 한 기기 로그인(휴대폰 1대·PC 1대, device/SingleDeviceLoginFilter). 운영은 기본값(켜짐) 그대로 둡니다.
+    # 개발 PC에서 같은 계정으로 여러 브라우저·기기를 시험할 때만 AUTH_SINGLE_DEVICE_LOGIN=false로 끕니다
+    # (맛다공 저장소 상위 .claude/launch.json의 auth-api 실행 설정).
+    single-device-login: ${AUTH_SINGLE_DEVICE_LOGIN:true}
     # 개발용 맛다공 공개 클라이언트. 서버 시작 시 oauth2_registered_client에 등록·동기화하며,
     # 맛다공 가입 API는 이 client_id가 audience에 있는 토큰만 받습니다.
     matdagong-client-id: matdagong-web-dev

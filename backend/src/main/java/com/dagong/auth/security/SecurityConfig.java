@@ -82,7 +82,8 @@ public class SecurityConfig {
             ActiveAccountChecker activeAccountChecker,
             DeviceLoginService deviceLogins,
             @Value("${dagong.auth.matdagong-client-id}") String clientId,
-            @Value("${dagong.auth.login-page-url}") String loginPageUrl)
+            @Value("${dagong.auth.login-page-url}") String loginPageUrl,
+            @Value("${dagong.auth.single-device-login}") boolean isSingleDeviceLogin)
             throws Exception {
         OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
 
@@ -100,12 +101,16 @@ public class SecurityConfig {
                                     }
                                 }))))
                 .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
-                // 로그인 사용자를 읽은 직후, 인가 코드를 발급하는 엔드포인트 필터보다 먼저 실행됩니다.
-                .addFilterAfter(
-                        new SingleDeviceLoginFilter(deviceLogins, clientId, loginPageUrl),
-                        SecurityContextHolderFilter.class)
                 .exceptionHandling(
                         ex -> ex.authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint(loginPageUrl)));
+        // 한 기기 로그인: 로그인 사용자를 읽은 직후, 인가 코드를 발급하는 엔드포인트 필터보다 먼저 실행됩니다.
+        // 개발 PC에서 여러 기기를 시험할 때만 dagong.auth.single-device-login=false로 끕니다(기본 켜짐, application.yml).
+        // 끄면 기기 기록(DeviceTrackingAuthorizationService)도 남지 않아 다른 기기 로그아웃 안내가 생기지 않습니다.
+        if (isSingleDeviceLogin) {
+            http.addFilterAfter(
+                    new SingleDeviceLoginFilter(deviceLogins, clientId, loginPageUrl),
+                    SecurityContextHolderFilter.class);
+        }
 
         return http.build();
     }

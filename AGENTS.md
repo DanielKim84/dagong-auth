@@ -9,6 +9,7 @@ Claude Code, Codex 등 AI 도구는 이 저장소에서 작업하기 전에 이 
 - 코딩 스타일: `../dagong-matdagong/docs/coding-style.md` (GitHub: https://github.com/DanielKim84/matdagong/blob/main/docs/coding-style.md)
 - 개발 환경(다른 PC 세팅 포함): `../dagong-matdagong/docs/home-development-setup.md`
 - 이 저장소 구조와 인증 흐름: [README.md](README.md)
+- 다공 공통 브랜드 D의 자산·사용 기준: [브랜드 가이드](frontend/public/assets/brand/README.md)
 
 ## 꼭 지킬 것
 
@@ -17,6 +18,7 @@ Claude Code, Codex 등 AI 도구는 이 저장소에서 작업하기 전에 이 
 - 이미 적용된 Flyway 마이그레이션은 고치지 않고 새 버전 파일을 추가합니다.
 - 카카오 로그인 흐름·토큰 발급·보안 설정을 바꿀 때는 이유를 먼저 설명하고 사용자 확인을 받습니다.
 - 포트(4840·5840)와 `localhost` 주소를 바꾸지 않습니다. 커밋·푸시는 사용자가 요청할 때만 합니다.
+- 공통 계정의 브랜드 자산은 `frontend/public/assets/brand/`의 D안을 사용합니다. 맛다공·여다공의 개별 서비스 로고와 혼용하지 않고, 자산을 바꿀 때는 브랜드 가이드의 파일 목록과 적용 상태도 함께 갱신합니다.
 
 ## 작업을 마치기 전에
 

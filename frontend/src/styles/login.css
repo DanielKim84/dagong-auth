@@ -4,34 +4,34 @@
  * 맛다공 테마 값이 바뀌면 여기도 같은 이름의 값을 바꿉니다.
  */
 :root {
-  --neutral-25: #fffcf8;
-  --neutral-50: #fff8f1;
-  --neutral-150: #f3e6db;
-  --neutral-200: #e9d9cc;
-  --neutral-400: #a99689;
-  --neutral-500: #7f6f66;
-  --neutral-700: #4f403a;
-  --neutral-800: #3b2d27;
-  --brand-400: #eb7d5e;
-  --brand-500: #e05d3c;
-  --brand-600: #cf3f25;
-  --clay-800: #4b3328;
+  --neutral-0: #ffffff;
+  --neutral-25: #fdfdfe;
+  --neutral-50: #f7f8fa;
+  --neutral-150: #e7e9ed;
+  --neutral-200: #dadee4;
+  --neutral-400: #929aa6;
+  --neutral-500: #68717e;
+  --neutral-700: #3d4652;
+  --neutral-800: #20252b;
+  --brand-50: #fff1f4;
+  --brand-400: #fc6b8b;
+  --brand-500: #ef365b;
+  --brand-600: #d9234c;
   --green-400: #62ab74;
   --green-500: #448f59;
-  --shadow-color: #3b2214;
+  --shadow-color: #20252b;
   --on-strong: #ffffff;
   /* 소셜 로그인 버튼 색은 각 제공자의 브랜드 지침을 따르므로 맛다공 테마에 없습니다. */
   --kakao-bg: #fee500;
   --kakao-ink: #191600;
-  --naver-bg: #03a94d;
+  --naver-bg: #03c75a;
   --font-body: "Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI", "Malgun Gothic", "Noto Sans KR", sans-serif;
-  --font-display: "Jua", var(--font-body);
   --radius-control: 16px;
   --radius-pill: 999px;
 
   font-family: var(--font-body);
   color: var(--neutral-800);
-  background: var(--neutral-50);
+  background: var(--neutral-0);
   font-synthesis: none;
   -webkit-font-smoothing: antialiased;
 }
@@ -46,7 +46,7 @@ body {
   margin: 0;
   padding: 24px;
   place-items: center;
-  background: var(--neutral-150);
+  background: var(--neutral-50);
 }
 
 button {
@@ -58,26 +58,15 @@ button:focus-visible {
   outline-offset: 4px;
 }
 
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  overflow: hidden;
-  clip-path: inset(50%);
-  border: 0;
-  white-space: nowrap;
-}
-
 #root {
   display: grid;
   width: 100%;
   place-items: center;
 }
 
-/* 휴대폰 화면 비율의 카드: 위에 로고·캐릭터, 아래에 로그인 버튼 */
+/* 휴대폰 화면 비율의 흰 카드. 넓은 화면에서는 가운데 떠 있고, 휴대폰에서는 화면을 꽉 채웁니다. */
 .login-card {
+  position: relative;
   display: flex;
   width: 100%;
   max-width: 390px;
@@ -85,66 +74,81 @@ button:focus-visible {
   flex-direction: column;
   overflow: hidden;
   border-radius: 44px;
-  background: var(--neutral-50);
+  background: var(--neutral-0);
   box-shadow:
     0 1px 0 var(--neutral-150),
-    0 24px 48px color-mix(in srgb, var(--shadow-color) 14%, transparent);
+    0 24px 48px color-mix(in srgb, var(--shadow-color) 10%, transparent);
+  word-break: keep-all;
 }
 
-.login-hero {
+/* ── 다공 계정 로그인(보드 02-02): 위 오른쪽 옅은 코랄 고리, D 로고·제목·설명, 소셜 버튼, 아래 음식 사진 ── */
+.login-card.is-login::before {
+  position: absolute;
+  top: -110px;
+  right: -110px;
+  width: 260px;
+  height: 260px;
+  border: 34px solid var(--brand-50);
+  border-radius: 50%;
+  content: "";
+}
+
+.dagong-intro {
+  position: relative;
   display: flex;
-  flex: 1;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 14px;
-  padding: 72px 24px 16px;
+  padding: 88px 24px 0;
+  text-align: center;
 }
 
-.brand-logo {
+.dagong-intro__logo {
   display: block;
-  width: 220px;
+  width: 290px;
   height: auto;
+  margin-bottom: 34px;
 }
 
-.tagline {
+.dagong-intro h1 {
   margin: 0;
-  color: var(--neutral-700);
-  font-family: var(--font-display);
-  font-size: 22px;
-  font-weight: 400;
+  color: var(--neutral-800);
+  font-size: 29px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.45;
 }
 
-.hero-mascot {
-  display: block;
-  width: 200px;
-  height: auto;
-  margin-top: 24px;
+.dagong-intro p {
+  margin: 16px 0 0;
+  color: var(--neutral-700);
+  font-size: 16px;
+  line-height: 1.7;
 }
 
 .login-content {
-  padding: 0 24px;
+  position: relative;
+  padding: 36px 20px 0;
 }
 
 .social-buttons {
   display: grid;
-  gap: 10px;
+  gap: 14px;
 }
 
 .social-button {
   position: relative;
   display: flex;
   width: 100%;
-  min-height: 54px;
+  min-height: 58px;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
   border: 0;
   border-radius: var(--radius-control);
   padding: 0 20px;
   cursor: pointer;
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 18px;
+  font-weight: 800;
   transition:
     filter 0.15s,
     transform 0.15s;
@@ -155,109 +159,239 @@ button:focus-visible {
 }
 
 .social-button:active {
-  transform: scale(0.985);
+  transform: scale(0.99);
 }
 
 .provider-icon {
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   flex: none;
 }
 
 .kakao {
-  color: var(--kakao-ink);
   background: var(--kakao-bg);
+  color: var(--kakao-ink);
 }
 
 .naver {
-  color: var(--on-strong);
   background: var(--naver-bg);
+  color: var(--on-strong);
+}
+
+/* 아래쪽을 채우는 음식 사진. 위 가장자리는 흰 화면으로 부드럽게 녹아듭니다. */
+.login-food {
+  display: block;
+  width: 100%;
+  min-height: 180px;
+  flex: 1;
+  margin-top: 22px;
+  object-fit: cover;
+  -webkit-mask: linear-gradient(180deg, transparent, #000 18%);
+  mask: linear-gradient(180deg, transparent, #000 18%);
 }
 
 /* 다른 기기 로그인으로 로그아웃됐다는 한 줄 안내 */
 .device-signed-out {
-  margin: 0 0 12px;
+  margin: 0 0 14px;
   border-radius: var(--radius-control);
-  background: var(--neutral-25);
+  background: var(--neutral-50);
   padding: 10px 14px;
   color: var(--neutral-700);
   font-size: 14px;
   line-height: 1.5;
   text-align: center;
-  word-break: keep-all;
 }
 
-/* 한 기기 로그인 확인(DeviceConfirm) */
-.device-confirm {
+/* ── 로그인 오류(보드 02-03)·다른 기기 확인(02-04): 세로 맛다공 로고, 가운데 안내, 아래 버튼 ── */
+.auth-screen {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 76px 20px 48px;
   text-align: center;
-  word-break: keep-all;
 }
 
-.device-confirm h1 {
-  margin: 0 0 8px;
+.matdagong-mark {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.matdagong-mark img {
+  display: block;
+  width: 116px;
+  height: auto;
+  margin: -12px 0 -14px;
+  /* 심볼 원본의 흰 바탕이 흰 화면과 어긋나 보이지 않게 곱하기로 겹칩니다. */
+  mix-blend-mode: multiply;
+}
+
+.matdagong-mark b {
   color: var(--neutral-800);
-  font-family: var(--font-display);
-  font-size: 21px;
-  font-weight: 400;
+  font-size: 36px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
 }
 
-.device-confirm p {
-  margin: 0 0 20px;
-  color: var(--neutral-500);
+.auth-screen__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 48px;
+}
+
+.auth-screen__body.is-compact {
+  padding-top: 28px;
+}
+
+.auth-screen h1 {
+  margin: 0;
+  color: var(--neutral-800);
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.4;
+}
+
+.auth-screen__body p {
+  margin: 18px 0 0;
+  color: var(--neutral-700);
   font-size: 15px;
-  line-height: 1.6;
+  line-height: 1.75;
 }
 
-.device-confirm .device-confirm__error {
+.auth-screen__body .auth-screen__error {
   color: var(--brand-600);
   font-size: 14px;
   font-weight: 600;
 }
 
-.device-confirm__actions {
+.login-error__mark {
   display: grid;
-  gap: 10px;
+  width: 112px;
+  height: 112px;
+  place-items: center;
+  margin-bottom: 40px;
+  border-radius: 50%;
+  background: var(--brand-50);
+  color: var(--brand-500);
+  font-size: 62px;
+  font-weight: 900;
+  line-height: 1;
 }
 
-.device-confirm__button {
+.auth-screen__actions {
+  display: grid;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.auth-button {
   min-height: 54px;
   border: 1px solid var(--neutral-200);
   border-radius: var(--radius-control);
-  background: var(--neutral-25);
+  background: var(--neutral-0);
   cursor: pointer;
-  color: var(--neutral-700);
-  font-size: 16px;
-  font-weight: 700;
+  color: var(--neutral-800);
+  font-size: 18px;
+  font-weight: 800;
 }
 
-.device-confirm__button.is-primary {
+.auth-button.is-primary {
   border-color: var(--brand-500);
   background: var(--brand-500);
   color: var(--on-strong);
 }
 
-.device-confirm__button:disabled {
+.auth-button:disabled {
   cursor: default;
   opacity: 0.6;
 }
 
-.account-footer {
-  padding: 16px 24px 48px;
-  text-align: center;
+/* 맛다공이 켜진 휴대폰(앞)과 노트북(뒤) 그림. 바닥에 옅은 코랄 그림자를 깝니다. */
+.devices-art {
+  position: relative;
+  width: 228px;
+  height: 128px;
+  margin-bottom: 34px;
 }
 
-.account-footer p {
-  margin: 0;
-  color: var(--neutral-500);
-  font-size: 12px;
-  line-height: 1.6;
+.devices-art::after {
+  position: absolute;
+  right: 0;
+  bottom: -8px;
+  left: 0;
+  height: 14px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--brand-500) 16%, transparent), transparent);
+  content: "";
+}
+
+.devices-art > span {
+  position: absolute;
+  display: block;
+}
+
+.devices-art__screen {
+  display: grid;
+  height: 100%;
+  place-items: center;
+  border: 5px solid var(--neutral-800);
+  border-radius: 10px;
+  background: var(--brand-50);
+}
+
+.devices-art__screen img {
+  width: 54%;
+  height: auto;
+  mix-blend-mode: multiply;
+}
+
+.devices-art__laptop {
+  right: 0;
+  bottom: 0;
+  width: 166px;
+  height: 118px;
+}
+
+.devices-art__laptop .devices-art__screen {
+  height: 106px;
+  border-radius: 10px 10px 4px 4px;
+}
+
+.devices-art__base {
+  position: absolute;
+  right: -10px;
+  bottom: 0;
+  left: -10px;
+  height: 10px;
+  border-radius: 2px 2px 8px 8px;
+  background: var(--neutral-200);
+}
+
+.devices-art__phone {
+  bottom: 2px;
+  left: 0;
+  width: 66px;
+  height: 116px;
+}
+
+.devices-art__phone .devices-art__screen {
+  border-width: 4px;
+  border-radius: 12px;
+  background: var(--neutral-0);
+}
+
+.devices-art__phone .devices-art__screen img {
+  width: 74%;
 }
 
 @media (max-width: 480px) {
   body {
     display: block;
     padding: 0;
-    background: var(--neutral-50);
+    background: var(--neutral-0);
   }
 
   .login-card {
@@ -267,23 +401,23 @@ button:focus-visible {
     box-shadow: none;
   }
 
-  .login-hero {
-    padding-top: max(56px, calc(env(safe-area-inset-top) + 40px));
+  .dagong-intro,
+  .auth-screen {
+    padding-top: max(64px, calc(env(safe-area-inset-top) + 48px));
   }
 
-  .account-footer {
+  .auth-screen {
     padding-bottom: max(32px, calc(env(safe-area-inset-bottom) + 16px));
   }
 }
 
 @media (max-height: 700px) {
-  .login-hero {
-    padding-top: 40px;
+  .dagong-intro {
+    padding-top: 48px;
   }
 
-  .hero-mascot {
-    width: 150px;
-    margin-top: 8px;
+  .dagong-intro__logo {
+    margin-bottom: 20px;
   }
 }
 
@@ -302,7 +436,7 @@ button:focus-visible {
   border-radius: 18px;
   background: linear-gradient(135deg, var(--neutral-25), var(--neutral-50));
   padding: 12px 13px;
-  color: var(--clay-800);
+  color: var(--neutral-800);
   text-align: left;
   box-shadow:
     0 12px 34px color-mix(in srgb, var(--shadow-color) 14%, transparent),
